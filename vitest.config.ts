@@ -4,6 +4,7 @@ export default defineConfig({
     alias: [{ find: /^react-native$/, replacement: "react-native-web" }],
   },
   test: {
+    setupFiles: ["test/paseo-host.ts"],
     environment: "node",
     include: [
       "shared/**/*.test.ts",

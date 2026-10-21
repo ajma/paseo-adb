@@ -1,4 +1,5 @@
 import type { PluginTheme } from "@getpaseo/plugin";
+import { Icon } from "@getpaseo/plugin/client/react-native";
 import { Text, View } from "react-native";
 import type { Device } from "../shared/contracts";
 import { Action } from "./ui";
@@ -22,9 +23,8 @@ export function DeviceCard({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
         borderRadius: 10,
+        overflow: "hidden",
         borderWidth: 1,
         borderColor: theme.colors.border,
         backgroundColor: theme.colors.surface1,
@@ -32,9 +32,29 @@ export function DeviceCard({
     >
       <View
         style={{
+          width: 48,
+          flexShrink: 0,
+          alignSelf: "stretch",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: theme.colors.surface2,
+        }}
+      >
+        <Icon
+          name={
+            serial.startsWith("emulator-") ? "MonitorSmartphone" : "Smartphone"
+          }
+          size={32}
+          color={theme.colors.accent}
+        />
+      </View>
+      <View
+        style={{
           flex: 1,
           minWidth: 0,
           gap: 4,
+          paddingVertical: 10,
+          paddingRight: device.network ? 0 : 12,
         }}
       >
         <View
@@ -126,14 +146,16 @@ export function DeviceCard({
         )}
       </View>
       {device.network && (
-        <Action
-          theme={theme}
-          secondary
-          label={pending ? "Disconnecting…" : "Disconnect"}
-          accessibilityLabel={`Disconnect ${serial}`}
-          disabled={pending}
-          onPress={() => onDisconnect(serial)}
-        />
+        <View style={{ marginRight: 12 }}>
+          <Action
+            theme={theme}
+            secondary
+            label={pending ? "Disconnecting…" : "Disconnect"}
+            accessibilityLabel={`Disconnect ${serial}`}
+            disabled={pending}
+            onPress={() => onDisconnect(serial)}
+          />
+        </View>
       )}
     </View>
   );

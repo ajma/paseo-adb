@@ -125,6 +125,7 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
           <Card
             theme={theme}
             title="Connect a device"
+            icon="PlugZap"
             detail="Paste an address or reuse a recent IP with a new port."
           >
             <EndpointForm

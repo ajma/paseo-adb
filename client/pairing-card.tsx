@@ -24,6 +24,7 @@ export function PairingCard({
     <Card
       theme={theme}
       title="Pair with QR code"
+      icon="QrCode"
       detail="Add a device over Wi-Fi without a USB cable."
     >
       <Text

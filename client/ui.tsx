@@ -1,4 +1,5 @@
 import type { PluginTheme } from "@getpaseo/plugin";
+import { Icon } from "@getpaseo/plugin/client/react-native";
 import { Pressable, Text, View } from "react-native";
 import type { ReactNode } from "react";
 
@@ -53,11 +54,13 @@ export function Action({
 export function Card({
   theme,
   title,
+  icon,
   detail,
   children,
 }: {
   theme: PluginTheme;
   title: string;
+  icon?: string;
   detail?: string;
   children: ReactNode;
 }) {
@@ -73,15 +76,19 @@ export function Card({
       }}
     >
       <View style={{ gap: 5 }}>
-        <Text
-          style={{
-            color: theme.colors.foreground,
-            fontSize: 18,
-            fontWeight: "600",
-          }}
-        >
-          {title}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          {icon && <Icon name={icon} size={22} color={theme.colors.accent} />}
+          <Text
+            style={{
+              color: theme.colors.foreground,
+              fontSize: 18,
+              fontWeight: "600",
+              flexShrink: 1,
+            }}
+          >
+            {title}
+          </Text>
+        </View>
         {detail && (
           <Text
             style={{
