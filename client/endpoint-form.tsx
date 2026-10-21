@@ -56,48 +56,56 @@ export function EndpointForm({
       >
         IP:port
       </Text>
-      <TextInput
-        ref={input}
-        accessibilityLabel="IP:port"
-        value={value}
-        selection={selection}
-        onSelectionChange={({ nativeEvent }) =>
-          setSelection((current) =>
-            current ? nativeEvent.selection : undefined,
-          )
-        }
-        placeholder="192.168.1.80:37123"
-        placeholderTextColor={theme.colors.foregroundMuted}
-        autoCapitalize="none"
-        autoCorrect={false}
-        spellCheck={false}
-        returnKeyType="go"
-        editable={!pending}
-        onSubmitEditing={submit}
-        onChangeText={(text) => {
-          setValue(text);
-          setSelection(undefined);
-          setError(undefined);
-        }}
-        style={{
-          color: theme.colors.foreground,
-          backgroundColor: theme.colors.surface2,
-          borderColor: error ? theme.colors.statusDanger : theme.colors.border,
-          borderWidth: 1,
-          borderRadius: 9,
-          paddingHorizontal: 14,
-          paddingVertical: 13,
-          fontSize: 16,
-          minHeight: 48,
-        }}
-      />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <TextInput
+          ref={input}
+          accessibilityLabel="IP:port"
+          value={value}
+          selection={selection}
+          onSelectionChange={({ nativeEvent }) =>
+            setSelection((current) =>
+              current ? nativeEvent.selection : undefined,
+            )
+          }
+          placeholder="192.168.1.80:37123"
+          placeholderTextColor={theme.colors.foregroundMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          spellCheck={false}
+          returnKeyType="go"
+          editable={!pending}
+          onSubmitEditing={submit}
+          onChangeText={(text) => {
+            setValue(text);
+            setSelection(undefined);
+            setError(undefined);
+          }}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            color: theme.colors.foreground,
+            backgroundColor: theme.colors.surface2,
+            borderColor: error
+              ? theme.colors.statusDanger
+              : theme.colors.border,
+            borderWidth: 1,
+            borderRadius: 9,
+            paddingHorizontal: 14,
+            paddingVertical: 13,
+            fontSize: 16,
+            minHeight: 48,
+          }}
+        />
+        <View>
+          <Action
+            theme={theme}
+            label={pending ? "Connecting…" : "Connect"}
+            disabled={pending}
+            onPress={submit}
+          />
+        </View>
+      </View>
       <Feedback theme={theme} message={error} error />
-      <Action
-        theme={theme}
-        label={pending ? "Connecting…" : "Connect"}
-        disabled={pending}
-        onPress={submit}
-      />
       <Text
         style={{
           color: theme.colors.foregroundMuted,
