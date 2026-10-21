@@ -3,6 +3,7 @@ import { Icon } from "@getpaseo/plugin/client/react-native";
 import { Text, View } from "react-native";
 import type { Device } from "../shared/contracts";
 import { Action } from "./ui";
+import { deviceTypeIcons } from "../shared/device-type";
 export function DeviceCard({
   theme,
   device,
@@ -42,7 +43,10 @@ export function DeviceCard({
       >
         <Icon
           name={
-            serial.startsWith("emulator-") ? "MonitorSmartphone" : "Smartphone"
+            deviceTypeIcons[
+              device.deviceType ??
+                (serial.startsWith("emulator-") ? "emulator" : "unknown")
+            ]
           }
           size={32}
           color={theme.colors.accent}

@@ -1,6 +1,7 @@
 import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
 import { ipSchema } from "./endpoint";
+import { deviceTypeSchema } from "./device-type";
 
 export const deviceSchema = z.object({
   serial: z.string(),
@@ -11,6 +12,7 @@ export const deviceSchema = z.object({
   androidVersion: z.string().optional(),
   product: z.string().optional(),
   transportId: z.string().optional(),
+  deviceType: deviceTypeSchema.optional(),
 });
 export type Device = z.infer<typeof deviceSchema>;
 export const pairingSchema = z.object({

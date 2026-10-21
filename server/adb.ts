@@ -6,6 +6,7 @@ import { join } from "node:path";
 import type { Device } from "../shared/contracts";
 import { parseEndpoint } from "../shared/endpoint";
 import { parseDevices, parseServices } from "./parsers";
+import { detectDeviceType } from "./device-type";
 
 export type CommandOptions = { signal?: AbortSignal; timeout?: number };
 export type CommandRunner = (
@@ -115,6 +116,25 @@ export class AdbClient {
               device.model = properties["ro.product.model"];
             if (properties["ro.build.version.release"])
               device.androidVersion = properties["ro.build.version.release"];
+            device.deviceType = detectDeviceType(device.serial, properties);
+            if (
+              device.deviceType === "unknown" ||
+              device.deviceType === "emulator"
+            ) {
+              try {
+                const features = await this.run(
+                  ["-s", device.serial, "shell", "pm", "list", "features"],
+                  { timeout: 2000 },
+                );
+                device.deviceType = detectDeviceType(
+                  device.serial,
+                  properties,
+                  features,
+                );
+              } catch {
+                // Metadata remains useful when the package manager is unavailable.
+              }
+            }
           } catch {
             /* A transport can disappear between listing and reading its properties. */
           }

@@ -57,3 +57,32 @@ it("rejects a textual pairing failure", async () => {
   const adb = new AdbClient("adb", async () => "Failed: Wrong password");
   await expect(adb.pair("192.168.1.2:3456", "secret")).rejects.toThrow(/pair/i);
 });
+
+it("uses system features when build properties omit a watch category", async () => {
+  const adb = new AdbClient("adb", async (args) => {
+    if (args[0] === "devices")
+      return "List of devices attached\nWATCH device model:Pixel_Watch\n";
+    if (args.includes("getprop"))
+      return "[ro.product.model]: [Pixel Watch]\n[ro.build.characteristics]: [nosdcard]\n";
+    if (args.slice(-3).join(" ") === "pm list features")
+      return "feature:android.hardware.type.watch\n";
+    throw new Error("Unexpected command");
+  });
+  expect((await adb.devices())[0]).toMatchObject({
+    model: "Pixel Watch",
+    deviceType: "watch",
+  });
+});
+
+it("keeps device metadata when feature detection fails", async () => {
+  const adb = new AdbClient("adb", async (args) => {
+    if (args[0] === "devices") return "List of devices attached\nABC device\n";
+    if (args.includes("getprop"))
+      return "[ro.product.model]: [Mystery Device]\n";
+    throw new Error("Package manager unavailable");
+  });
+  expect((await adb.devices())[0]).toMatchObject({
+    model: "Mystery Device",
+    deviceType: "unknown",
+  });
+});
