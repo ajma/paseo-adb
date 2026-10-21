@@ -8,6 +8,7 @@ Open **ADB** in the sidebar or choose **Manage Android devices** in the Command 
 
 - QR pairing with automatic device discovery and connection.
 - USB, Wi-Fi, and emulator device status, with manufacturer, model, Android version, and serial/address when available.
+- Device-type icons for phones, Wear OS watches, tablets, TVs, automotive devices, and emulators when Android reports their category.
 - One pasteable IP:port input.
 - Five recent successful IPs. Select one to fill IP plus colon, then type a new port.
 - Network disconnect, manual refresh, and individual history removal.

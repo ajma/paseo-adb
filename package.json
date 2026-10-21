@@ -3,11 +3,33 @@
   "version": "0.1.0",
   "description": "Manage Android Debug Bridge devices and QR pairing in Paseo.",
   "type": "module",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajma/paseo-adb.git"
+  },
+  "homepage": "https://github.com/ajma/paseo-adb#readme",
+  "bugs": {
+    "url": "https://github.com/ajma/paseo-adb/issues"
+  },
+  "keywords": [
+    "paseo",
+    "paseo-plugin",
+    "adb",
+    "android",
+    "wear-os",
+    "wireless-debugging"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "files": [
     "paseo-plugin.json",
     "OVERVIEW.md",
     "README.md",
+    "assets/",
+    "docs/USAGE.md",
+    "npm-shrinkwrap.json",
     "index.client.tsx",
     "index.server.ts",
     "client/",

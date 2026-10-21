@@ -2,6 +2,7 @@
   "id": "adb",
   "name": "Android Debug Bridge",
   "description": "Pair Android devices with a QR code, manage connections, and reuse recent IPs.",
+  "media": ["assets/screenshot.png"],
   "requirements": {
     "paseo": ">=0.12.0"
   }
