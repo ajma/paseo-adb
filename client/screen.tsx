@@ -170,7 +170,7 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
           />
         </View>
       </View>
-      <View style={{ gap: 13 }}>
+      <View style={{ gap: 8 }}>
         <View
           style={{
             flexDirection: "row",

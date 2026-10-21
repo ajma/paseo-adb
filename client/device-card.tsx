@@ -19,8 +19,11 @@ export function DeviceCard({
   return (
     <View
       style={{
-        gap: 10,
-        padding: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
         borderRadius: 10,
         borderWidth: 1,
         borderColor: theme.colors.border,
@@ -29,80 +32,99 @@ export function DeviceCard({
     >
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
+          flex: 1,
+          minWidth: 0,
+          gap: 4,
         }}
       >
-        <Text
+        <View
           style={{
-            color: theme.colors.foreground,
-            fontSize: 16,
-            fontWeight: "600",
-            flexShrink: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
           }}
         >
-          {title}
-        </Text>
-        <Text
+          <Text
+            style={{
+              color: theme.colors.foreground,
+              fontSize: 14,
+              fontWeight: "600",
+              flexShrink: 1,
+            }}
+          >
+            {title}
+          </Text>
+          <Text
+            style={{
+              color: online
+                ? theme.colors.statusSuccess
+                : theme.colors.statusWarning,
+              fontSize: 11,
+              fontWeight: "600",
+            }}
+          >
+            {online ? "Connected" : state}
+          </Text>
+        </View>
+        <View
           style={{
-            color: online
-              ? theme.colors.statusSuccess
-              : theme.colors.statusWarning,
-            fontSize: 12,
-            fontWeight: "600",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
           }}
         >
-          {online ? "Connected" : state}
-        </Text>
+          {title !== serial && (
+            <Text
+              selectable
+              numberOfLines={1}
+              style={{
+                color: theme.colors.foregroundMuted,
+                fontSize: 11,
+                flexShrink: 1,
+              }}
+            >
+              {serial}
+            </Text>
+          )}
+          <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}>
+            {device.network
+              ? "Wi-Fi / network"
+              : serial.startsWith("emulator-")
+                ? "Emulator"
+                : "USB"}
+          </Text>
+          <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}>
+            {device.androidVersion
+              ? `Android ${device.androidVersion}`
+              : "Android version unavailable"}
+          </Text>
+        </View>
+        {state === "unauthorized" && (
+          <Text
+            style={{
+              color: theme.colors.foregroundMuted,
+              fontSize: 12,
+              lineHeight: 18,
+            }}
+          >
+            Approve the debugging prompt on the device to see its details.
+          </Text>
+        )}
+        {state === "offline" && (
+          <Text
+            style={{
+              color: theme.colors.foregroundMuted,
+              fontSize: 12,
+              lineHeight: 18,
+            }}
+          >
+            Device is offline. Check its connection and Wireless debugging
+            setting.
+          </Text>
+        )}
       </View>
-      {title !== serial && (
-        <Text
-          selectable
-          style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}
-        >
-          {serial}
-        </Text>
-      )}
-      <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
-        <Text style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}>
-          {device.network
-            ? "Wi-Fi / network"
-            : serial.startsWith("emulator-")
-              ? "Emulator"
-              : "USB"}
-        </Text>
-        <Text style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}>
-          {device.androidVersion
-            ? `Android ${device.androidVersion}`
-            : "Android version unavailable"}
-        </Text>
-      </View>
-      {state === "unauthorized" && (
-        <Text
-          style={{
-            color: theme.colors.foregroundMuted,
-            fontSize: 13,
-            lineHeight: 20,
-          }}
-        >
-          Approve the debugging prompt on the device to see its details.
-        </Text>
-      )}
-      {state === "offline" && (
-        <Text
-          style={{
-            color: theme.colors.foregroundMuted,
-            fontSize: 13,
-            lineHeight: 20,
-          }}
-        >
-          Device is offline. Check its connection and Wireless debugging
-          setting.
-        </Text>
-      )}
       {device.network && (
         <Action
           theme={theme}
