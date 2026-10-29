@@ -2,7 +2,7 @@ import type { PluginScreenProps } from "@getpaseo/plugin/client";
 import { useRpc } from "@getpaseo/plugin/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ScrollView, Text, View } from "react-native";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   devicesRpc,
   connectRpc,
@@ -15,7 +15,7 @@ import {
 } from "../shared/contracts";
 import { EndpointForm } from "./endpoint-form";
 import { DeviceCard } from "./device-card";
-import { PairingCard } from "./pairing-card";
+import { PairingDialog } from "./pairing-dialog";
 import { Action, Card, Feedback } from "./ui";
 
 const keys = {
@@ -26,6 +26,9 @@ const keys = {
 const message = (error: unknown) =>
   error instanceof Error ? error.message : error ? String(error) : undefined;
 export function AdbScreen({ theme, layout }: PluginScreenProps) {
+  const [pairingOpen, setPairingOpen] = useState(false);
+  const [checkingPairing, setCheckingPairing] = useState(false);
+  const openingPairing = useRef(false);
   const queryClient = useQueryClient();
   const listDevices = useRpc(devicesRpc),
     listHistory = useRpc(historyRpc),
@@ -78,6 +81,27 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
     mutationFn: (id: string) => doCancel({ id }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.pairing }),
   });
+  const openPairing = async () => {
+    setPairingOpen(true);
+    if (openingPairing.current) return;
+    openingPairing.current = true;
+    setCheckingPairing(true);
+    try {
+      const status = await pairing.refetch();
+      if (
+        status.isSuccess &&
+        (!status.data ||
+          !["waiting", "pairing", "connecting"].includes(status.data.phase))
+      ) {
+        await start.mutateAsync();
+      }
+    } catch {
+      // The query and mutation errors are shown inside the dialog.
+    } finally {
+      openingPairing.current = false;
+      setCheckingPairing(false);
+    }
+  };
   const previousPhase = useRef<string | undefined>(undefined);
   useEffect(() => {
     const phase = pairing.data?.phase;
@@ -88,164 +112,168 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
   const count =
     devices.data?.devices.filter((d) => d.state === "device").length ?? 0;
   return (
-    <ScrollView
-      keyboardShouldPersistTaps="handled"
-      style={{ flex: 1, backgroundColor: theme.colors.surface0 }}
-      contentContainerStyle={{ padding: layout.compact ? 16 : 28, gap: 22 }}
-    >
-      <View style={{ gap: 7 }}>
-        <Text
-          style={{
-            color: theme.colors.foreground,
-            fontSize: layout.compact ? 24 : 30,
-            fontWeight: "700",
-          }}
-        >
-          Android Debug Bridge
-        </Text>
-        <Text
-          style={{
-            color: theme.colors.foregroundMuted,
-            fontSize: 14,
-            lineHeight: 21,
-          }}
-        >
-          Your Android devices, ready for development.
-        </Text>
-      </View>
-      <View
-        style={{
-          flexDirection: layout.compact ? "column" : "row",
-          alignItems: "stretch",
-          gap: 18,
-        }}
+    <>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1, backgroundColor: theme.colors.surface0 }}
+        contentContainerStyle={{ padding: layout.compact ? 16 : 28, gap: 22 }}
       >
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Card
-            theme={theme}
-            title="Connect a device"
-            icon="PlugZap"
-            detail="Paste an address or reuse a recent IP with a new port."
-          >
-            <EndpointForm
-              theme={theme}
-              history={history.data ?? []}
-              pending={connect.isPending}
-              onConnect={(endpoint) => connect.mutate(endpoint)}
-              onRemove={(host) => remove.mutate(host)}
-            />
-            <Feedback
-              theme={theme}
-              message={
-                message(connect.error) ||
-                message(remove.error) ||
-                message(history.error)
-              }
-              error
-            />
-            {connect.isSuccess && (
-              <Feedback
-                theme={theme}
-                message={[connect.data.message, connect.data.warning]
-                  .filter(Boolean)
-                  .join(" ")}
-              />
-            )}
-          </Card>
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <PairingCard
-            theme={theme}
-            state={pairing.data}
-            pending={start.isPending || cancel.isPending}
-            error={
-              message(start.error) ||
-              message(cancel.error) ||
-              message(pairing.error)
-            }
-            onStart={() => start.mutate()}
-            onCancel={() => {
-              if (pairing.data) cancel.mutate(pairing.data.id);
-            }}
-          />
-        </View>
-      </View>
-      <View style={{ gap: 8 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
+        <View style={{ gap: 7 }}>
           <Text
             style={{
               color: theme.colors.foreground,
-              fontSize: 19,
-              fontWeight: "600",
+              fontSize: layout.compact ? 24 : 30,
+              fontWeight: "700",
             }}
           >
-            Devices · {count} connected
+            Android Debug Bridge
           </Text>
-          <Action
-            theme={theme}
-            secondary
-            label={devices.isFetching ? "Refreshing…" : "Refresh"}
-            disabled={devices.isFetching}
-            onPress={() => {
-              void refresh();
-            }}
-          />
-        </View>
-        <Feedback
-          theme={theme}
-          error
-          message={message(devices.error) || message(disconnect.error)}
-        />
-        {devices.isPending && (
-          <Feedback theme={theme} message="Looking for devices…" />
-        )}
-        {devices.data?.devices.length === 0 && (
-          <Card
-            theme={theme}
-            title="No devices yet"
-            detail="Pair using the QR code, connect with an IP:port, or attach a device over USB."
-          >
-            <Text
-              style={{
-                color: theme.colors.foregroundMuted,
-                fontSize: 13,
-                lineHeight: 20,
-              }}
-            >
-              For USB devices, enable USB debugging and approve the
-              authorization prompt on the phone.
-            </Text>
-          </Card>
-        )}
-        {devices.data?.devices.map((device) => (
-          <DeviceCard
-            key={device.serial}
-            theme={theme}
-            device={device}
-            pending={
-              disconnect.isPending && disconnect.variables === device.serial
-            }
-            onDisconnect={(serial) => disconnect.mutate(serial)}
-          />
-        ))}
-        {devices.data && (
           <Text
-            selectable
-            style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}
+            style={{
+              color: theme.colors.foregroundMuted,
+              fontSize: 14,
+              lineHeight: 21,
+            }}
           >
-            ADB on selected host: {devices.data.adbPath} · Refreshes every 5
-            seconds
+            Your Android devices, ready for development.
           </Text>
-        )}
-      </View>
-    </ScrollView>
+        </View>
+        <View
+          style={{
+            flexDirection: layout.compact ? "column" : "row",
+            alignItems: "stretch",
+            gap: 22,
+          }}
+        >
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Card
+              theme={theme}
+              title="Connect a device"
+              icon="PlugZap"
+              detail="Paste an address or reuse a recent IP with a new port."
+              headerAction={
+                <Action
+                  theme={theme}
+                  secondary
+                  icon="QrCode"
+                  label="Pair with QR code"
+                  disabled={start.isPending || checkingPairing}
+                  onPress={() => {
+                    void openPairing();
+                  }}
+                />
+              }
+            >
+              <EndpointForm
+                theme={theme}
+                history={history.data ?? []}
+                pending={connect.isPending}
+                onConnect={(endpoint) => connect.mutate(endpoint)}
+                onRemove={(host) => remove.mutate(host)}
+              />
+              <Feedback
+                theme={theme}
+                message={
+                  message(connect.error) ||
+                  message(remove.error) ||
+                  message(history.error)
+                }
+                error
+              />
+              {connect.isSuccess && (
+                <Feedback
+                  theme={theme}
+                  message={[connect.data.message, connect.data.warning]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
+              )}
+            </Card>
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Card
+              theme={theme}
+              title={`Devices · ${count} connected`}
+              icon="MonitorSmartphone"
+              headerAction={
+                <Action
+                  theme={theme}
+                  secondary
+                  label={devices.isFetching ? "Refreshing…" : "Refresh"}
+                  disabled={devices.isFetching}
+                  onPress={() => {
+                    void refresh();
+                  }}
+                />
+              }
+            >
+              <Feedback
+                theme={theme}
+                error
+                message={message(devices.error) || message(disconnect.error)}
+              />
+              {devices.isPending && (
+                <Feedback theme={theme} message="Looking for devices…" />
+              )}
+              {devices.data?.devices.length === 0 && (
+                <Card
+                  theme={theme}
+                  title="No devices yet"
+                  detail="Pair using the QR code, connect with an IP:port, or attach a device over USB."
+                >
+                  <Text
+                    style={{
+                      color: theme.colors.foregroundMuted,
+                      fontSize: 13,
+                      lineHeight: 20,
+                    }}
+                  >
+                    For USB devices, enable USB debugging and approve the
+                    authorization prompt on the phone.
+                  </Text>
+                </Card>
+              )}
+              {devices.data?.devices.map((device) => (
+                <DeviceCard
+                  key={device.serial}
+                  theme={theme}
+                  device={device}
+                  pending={
+                    disconnect.isPending &&
+                    disconnect.variables === device.serial
+                  }
+                  onDisconnect={(serial) => disconnect.mutate(serial)}
+                />
+              ))}
+              {devices.data && (
+                <Text
+                  selectable
+                  style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}
+                >
+                  ADB on selected host: {devices.data.adbPath} · Refreshes every
+                  5 seconds
+                </Text>
+              )}
+            </Card>
+          </View>
+        </View>
+      </ScrollView>
+      <PairingDialog
+        theme={theme}
+        open={pairingOpen}
+        onOpenChange={setPairingOpen}
+        state={pairing.data}
+        pending={checkingPairing || start.isPending || cancel.isPending}
+        error={
+          message(start.error) ||
+          message(cancel.error) ||
+          message(pairing.error)
+        }
+        onStart={() => start.mutate()}
+        onCancel={() => {
+          if (pairing.data) cancel.mutate(pairing.data.id);
+        }}
+      />
+    </>
   );
 }

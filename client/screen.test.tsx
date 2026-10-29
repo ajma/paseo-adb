@@ -119,12 +119,105 @@ it("shows the QR returned by the host and can cancel its session", async () => {
     return {};
   });
   openScreen();
-  fireEvent.click(screen.getByRole("button", { name: "Generate QR code" }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Generate QR code" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  expect(
+    screen.getByRole("dialog", { name: "Pair with QR code" }),
+  ).toBeTruthy();
   expect(
     await screen.findByLabelText("Android wireless debugging pairing QR code"),
   ).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Cancel pairing" }));
   await waitFor(() => expect(canceled).toBe("session-1"));
+});
+
+it("dismisses and reopens QR pairing without replacing or canceling the active code", async () => {
+  const session = {
+    id: "session-1",
+    phase: "waiting",
+    qr: "data:image/png;base64,test",
+    expiresAt: Date.now() + 120000,
+    message: "Waiting for scan",
+  };
+  let active = false;
+  const start = vi.fn(async () => {
+    active = true;
+    return session;
+  });
+  const cancel = vi.fn(async () => ({}));
+  api.handlers.set("adb.pairing.status", async () => (active ? session : null));
+  api.handlers.set("adb.pairing.start", start);
+  api.handlers.set("adb.pairing.cancel", cancel);
+  openScreen();
+  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  expect(
+    await screen.findByLabelText("Android wireless debugging pairing QR code"),
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Close pairing dialog" }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(
+    screen.queryByLabelText("Android wireless debugging pairing QR code"),
+  ).toBeNull();
+  expect(cancel).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  expect(
+    await screen.findByLabelText("Android wireless debugging pairing QR code"),
+  ).toBeTruthy();
+  expect(start).toHaveBeenCalledTimes(1);
+});
+
+it("waits for pairing status before deciding whether to generate a new code", async () => {
+  let resolveStatus!: (value: unknown) => void;
+  const status = new Promise((resolve) => {
+    resolveStatus = resolve;
+  });
+  api.handlers.set("adb.pairing.status", () => status);
+  const start = vi.fn(async () => {
+    throw new Error("Must keep existing code");
+  });
+  api.handlers.set("adb.pairing.start", start);
+  openScreen();
+  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  expect(
+    screen.getByRole("dialog", { name: "Pair with QR code" }),
+  ).toBeTruthy();
+  expect(start).not.toHaveBeenCalled();
+  await act(async () => {
+    resolveStatus({
+      id: "existing",
+      phase: "waiting",
+      qr: "data:image/png;base64,existing",
+      expiresAt: Date.now() + 120000,
+      message: "Waiting for scan",
+    });
+  });
+  expect(
+    await screen.findByLabelText("Android wireless debugging pairing QR code"),
+  ).toBeTruthy();
+  expect(start).not.toHaveBeenCalled();
+});
+
+it("shows pairing failures in the dialog and lets the user retry", async () => {
+  api.handlers.set("adb.pairing.start", async () => {
+    throw new Error("Could not generate QR code");
+  });
+  openScreen();
+  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  expect(await screen.findByText("Could not generate QR code")).toBeTruthy();
+  api.handlers.set("adb.pairing.start", async () => ({
+    id: "retry",
+    phase: "waiting",
+    qr: "data:image/png;base64,retry",
+    expiresAt: Date.now() + 120000,
+    message: "Waiting for scan",
+  }));
+  // Closing and reopening refreshes the hook's host function after the failed request.
+  fireEvent.click(screen.getByRole("button", { name: "Close pairing dialog" }));
+  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  expect(
+    await screen.findByLabelText("Android wireless debugging pairing QR code"),
+  ).toBeTruthy();
 });
 
 it("explains unavailable ADB without hiding the connection form", async () => {

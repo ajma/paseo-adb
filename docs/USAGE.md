@@ -28,11 +28,13 @@ Open **ADB** in the sidebar, or search **Manage Android devices** in the Command
 
 1. Connect the phone and the selected Paseo daemon machine to the same network.
 2. Enable Developer options and Wireless debugging on the phone.
-3. In Paseo, choose **Generate QR code**.
+3. In Paseo, choose **Pair with QR code**. A dialog opens and generates the code.
 4. On the phone, open **Wireless debugging → Pair device with QR code** and scan the displayed code.
 5. The plugin discovers the phone, pairs it, and connects using its advertised connection port.
 
 The code expires after two minutes. **Cancel pairing** and **Generate new code** invalidate the current plugin session. A session already in progress is shared with other Paseo clients viewing this daemon.
+
+Closing the dialog leaves an active pairing session running. Choose **Pair with QR code** again to reopen the same session; use **Cancel pairing** inside the dialog to stop it. On narrow screens and phones, the dialog appears as a sheet.
 
 If pairing succeeds but the connection port cannot be discovered, the screen reports **Paired**. Paste the main Wireless debugging screen's address into the manual field to connect.
 

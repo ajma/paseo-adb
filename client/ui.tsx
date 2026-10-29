@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 export function Action({
   theme,
   label,
+  icon,
   onPress,
   disabled = false,
   secondary = false,
@@ -13,6 +14,7 @@ export function Action({
 }: {
   theme: PluginTheme;
   label: string;
+  icon?: string;
   onPress: () => void;
   disabled?: boolean;
   secondary?: boolean;
@@ -34,9 +36,21 @@ export function Action({
         opacity: disabled ? 0.45 : pressed ? 0.75 : 1,
         alignSelf: "flex-start",
         minHeight: 44,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
         justifyContent: "center",
       })}
     >
+      {icon && (
+        <Icon
+          name={icon}
+          size={18}
+          color={
+            secondary ? theme.colors.foreground : theme.colors.accentForeground
+          }
+        />
+      )}
       <Text
         style={{
           color: secondary
@@ -56,12 +70,14 @@ export function Card({
   title,
   icon,
   detail,
+  headerAction,
   children,
 }: {
   theme: PluginTheme;
   title: string;
   icon?: string;
   detail?: string;
+  headerAction?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -76,18 +92,38 @@ export function Card({
       }}
     >
       <View style={{ gap: 5 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          {icon && <Icon name={icon} size={22} color={theme.colors.accent} />}
-          <Text
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <View
             style={{
-              color: theme.colors.foreground,
-              fontSize: 18,
-              fontWeight: "600",
-              flexShrink: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 10,
+              flex: 1,
+              minWidth: 150,
             }}
           >
-            {title}
-          </Text>
+            {icon && <Icon name={icon} size={22} color={theme.colors.accent} />}
+            <Text
+              style={{
+                color: theme.colors.foreground,
+                fontSize: 18,
+                fontWeight: "600",
+                flexShrink: 1,
+              }}
+            >
+              {title}
+            </Text>
+          </View>
+          {headerAction && (
+            <View style={{ marginLeft: "auto" }}>{headerAction}</View>
+          )}
         </View>
         {detail && (
           <Text
