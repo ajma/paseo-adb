@@ -37,7 +37,7 @@ it("replaces a prior endpoint with the saved IP and colon and focuses the port p
   render(
     <EndpointForm
       theme={theme}
-      history={["192.168.1.80"]}
+      history={[{ host: "192.168.1.80", description: "Google Pixel 6" }]}
       pending={false}
       onConnect={() => {}}
       onRemove={() => {}}
@@ -50,13 +50,14 @@ it("replaces a prior endpoint with the saved IP and colon and focuses the port p
   expect(document.activeElement).toBe(input);
   expect(input.selectionStart).toBe(13);
   expect(input.selectionEnd).toBe(13);
+  expect(screen.getByText("Google Pixel 6")).toBeTruthy();
 });
 it("requires a fresh port before connecting a saved IP", () => {
   const connect = vi.fn();
   render(
     <EndpointForm
       theme={theme}
-      history={["192.168.1.80"]}
+      history={[{ host: "192.168.1.80" }]}
       pending={false}
       onConnect={connect}
       onRemove={() => {}}

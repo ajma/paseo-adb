@@ -54,7 +54,9 @@ beforeEach(() => {
     devices: [],
     adbPath: "/sdk/adb",
   }));
-  api.handlers.set("adb.history", async () => ["192.168.1.80"]);
+  api.handlers.set("adb.history", async () => [
+    { host: "192.168.1.80", description: "Google Pixel 6" },
+  ]);
   api.handlers.set("adb.pairing.status", async () => null);
   api.handlers.set("adb.history.remove", async () => ({}));
   api.handlers.set("adb.disconnect", async () => ({ message: "disconnected" }));
@@ -96,7 +98,11 @@ it("wires the compact screen's history to a new-port connection and refreshes de
   fireEvent.change(input, { target: { value: "192.168.1.80:40123" } });
   fireEvent.click(screen.getByRole("button", { name: "Connect" }));
   await waitFor(() => expect(connected).toBe("192.168.1.80:40123"));
-  expect(await screen.findByText("Google Pixel 6")).toBeTruthy();
+  expect(
+    await screen.findByRole("button", {
+      name: "Disconnect 192.168.1.80:40123",
+    }),
+  ).toBeTruthy();
 });
 
 it("shows the QR returned by the host and can cancel its session", async () => {

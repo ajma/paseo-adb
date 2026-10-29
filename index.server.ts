@@ -54,7 +54,13 @@ export default function contribute(server: PluginServerContext) {
 
   server.handle(devicesRpc, async () => {
     const { adb } = await getBackend();
-    return { devices: await adb.devices(), adbPath: adb.path };
+    const devices = await adb.devices();
+    try {
+      await history.rememberDevices(devices);
+    } catch {
+      // Saved descriptions are optional; history failures must not hide devices.
+    }
+    return { devices, adbPath: adb.path };
   });
   server.handle(connectRpc, async ({ endpoint }) => {
     const target = parseEndpoint(endpoint);
@@ -81,7 +87,7 @@ export default function contribute(server: PluginServerContext) {
     await textHistory.remove(text);
     return {};
   });
-  server.handle(historyRpc, () => history.list());
+  server.handle(historyRpc, () => history.entries());
   server.handle(removeHistoryRpc, async ({ host }) => {
     await history.remove(host);
     return {};

@@ -2,6 +2,11 @@ import { z } from "zod";
 
 export type Endpoint = { host: string; port: number; address: string };
 export const ipSchema = z.union([z.ipv4(), z.ipv6()]);
+export const ipHistoryEntrySchema = z.object({
+  host: ipSchema,
+  description: z.string().min(1).max(300).optional(),
+});
+export type IpHistoryEntry = z.infer<typeof ipHistoryEntrySchema>;
 export function historyPrefix(host: string): string {
   return host.includes(":") ? `[${host}]:` : `${host}:`;
 }

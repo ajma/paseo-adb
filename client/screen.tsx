@@ -54,10 +54,9 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
     retry: false,
   });
   const refresh = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: keys.devices }),
-      queryClient.invalidateQueries({ queryKey: keys.history }),
-    ]);
+    // Device metadata enriches the saved IP descriptions on the server.
+    await queryClient.invalidateQueries({ queryKey: keys.devices });
+    await queryClient.invalidateQueries({ queryKey: keys.history });
   };
   const connect = useMutation({
     mutationFn: (endpoint: string) => doConnect({ endpoint }),

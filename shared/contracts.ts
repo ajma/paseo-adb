@@ -1,6 +1,6 @@
 import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
-import { ipSchema } from "./endpoint";
+import { ipSchema, ipHistoryEntrySchema } from "./endpoint";
 import { deviceTypeSchema } from "./device-type";
 import { inputTextSchema, MAX_TEXT_HISTORY } from "./input-text";
 
@@ -70,7 +70,7 @@ export const removeTextHistoryRpc = defineRpc({
 export const historyRpc = defineRpc({
   name: "adb.history",
   input: empty,
-  output: z.array(ipSchema).max(5),
+  output: z.array(ipHistoryEntrySchema).max(5),
 });
 export const removeHistoryRpc = defineRpc({
   name: "adb.history.remove",

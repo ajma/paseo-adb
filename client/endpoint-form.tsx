@@ -1,7 +1,11 @@
 import type { PluginTheme } from "@getpaseo/plugin";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { historyPrefix, parseEndpoint } from "../shared/endpoint";
+import {
+  historyPrefix,
+  parseEndpoint,
+  type IpHistoryEntry,
+} from "../shared/endpoint";
 import { Action, Feedback } from "./ui";
 
 export function EndpointForm({
@@ -12,7 +16,7 @@ export function EndpointForm({
   onRemove,
 }: {
   theme: PluginTheme;
-  history: string[];
+  history: IpHistoryEntry[];
   pending: boolean;
   onConnect: (endpoint: string) => void;
   onRemove: (host: string) => void;
@@ -132,7 +136,7 @@ export function EndpointForm({
             Successful connections will appear here.
           </Text>
         )}
-        {history.map((host) => (
+        {history.map(({ host, description }) => (
           <View
             key={host}
             style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
@@ -149,10 +153,24 @@ export function EndpointForm({
                 borderRadius: 8,
                 backgroundColor: theme.colors.surface2,
                 opacity: pressed ? 0.7 : 1,
+                flexDirection: "row",
+                alignItems: "center",
+                flexWrap: "wrap",
+                columnGap: 12,
+                rowGap: 4,
               })}
             >
               <Text style={{ color: theme.colors.foreground, fontSize: 14 }}>
                 {host}
+              </Text>
+              <Text
+                style={{
+                  color: theme.colors.foregroundMuted,
+                  fontSize: 13,
+                  flexShrink: 1,
+                }}
+              >
+                {description ?? "Device details unavailable"}
               </Text>
             </Pressable>
             <Pressable
@@ -160,12 +178,17 @@ export function EndpointForm({
               accessibilityLabel={`Remove ${host} from history`}
               disabled={pending}
               onPress={() => onRemove(host)}
-              style={{ padding: 12, minHeight: 44, justifyContent: "center" }}
+              style={{
+                minWidth: 44,
+                minHeight: 44,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
               <Text
-                style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}
+                style={{ color: theme.colors.foregroundMuted, fontSize: 22 }}
               >
-                Remove
+                ×
               </Text>
             </Pressable>
           </View>

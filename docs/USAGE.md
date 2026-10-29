@@ -46,6 +46,8 @@ The pairing-code dialog's port is different from the connection port. Manual con
 
 History contains only IPs from successful connections, ordered by most recent use, capped at five. Ports are intentionally not stored because Android can change them. QR credentials are never written to history.
 
+Recent IPs show the last known phone make and model beside the address. Descriptions are learned from connected devices and remain available after disconnecting or reloading the plugin. Existing saved IPs pick up descriptions the next time those devices connect; entries without known metadata show **Device details unavailable**.
+
 ## Device list
 
 The list refreshes every five seconds while open. **Refresh** triggers an immediate refresh.
@@ -84,7 +86,7 @@ Writes are serialized and atomic, and the file is private to the daemon user. Re
 - **QR scan waits or expires:** Use the scanner inside Wireless debugging. Check that phone and daemon are on the same local network and that mDNS/UDP 5353 is allowed. Guest Wi-Fi, access-point isolation, or VPNs can prevent discovery.
 - **Paired but not connected:** Paste the current connection address from the main Wireless debugging screen.
 - **Connection refused:** Recopy the address; the port may have changed after toggling wireless debugging.
-- **History cannot be read:** The plugin preserves invalid history rather than replacing it. Back up and repair the JSON array of IP strings, or remove the corrupt file manually to start fresh.
+- **History cannot be read:** The plugin preserves invalid history rather than replacing it. Back up and repair the JSON array of IP strings or `{ "host": "192.168.1.80", "description": "Google Pixel 6" }` entries, or remove the corrupt file manually to start fresh.
 - **Plugin failed:** Run `paseo plugin logs adb`.
 
 ## Development
