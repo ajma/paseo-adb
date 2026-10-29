@@ -145,52 +145,7 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
             gap: 22,
           }}
         >
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Card
-              theme={theme}
-              title="Connect a device"
-              icon="PlugZap"
-              detail="Paste an address or reuse a recent IP with a new port."
-              headerAction={
-                <Action
-                  theme={theme}
-                  secondary
-                  icon="Link"
-                  label="Pair"
-                  disabled={start.isPending || checkingPairing}
-                  onPress={() => {
-                    void openPairing();
-                  }}
-                />
-              }
-            >
-              <EndpointForm
-                theme={theme}
-                history={history.data ?? []}
-                pending={connect.isPending}
-                onConnect={(endpoint) => connect.mutate(endpoint)}
-                onRemove={(host) => remove.mutate(host)}
-              />
-              <Feedback
-                theme={theme}
-                message={
-                  message(connect.error) ||
-                  message(remove.error) ||
-                  message(history.error)
-                }
-                error
-              />
-              {connect.isSuccess && (
-                <Feedback
-                  theme={theme}
-                  message={[connect.data.message, connect.data.warning]
-                    .filter(Boolean)
-                    .join(" ")}
-                />
-              )}
-            </Card>
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flex: layout.compact ? undefined : 2, minWidth: 0 }}>
             <Card
               theme={theme}
               title={`Devices · ${count} connected`}
@@ -253,6 +208,51 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
                   ADB on selected host: {devices.data.adbPath} · Refreshes every
                   5 seconds
                 </Text>
+              )}
+            </Card>
+          </View>
+          <View style={{ flex: layout.compact ? undefined : 1, minWidth: 0 }}>
+            <Card
+              theme={theme}
+              title="Connect a device"
+              icon="PlugZap"
+              detail="Paste an address or reuse a recent IP with a new port."
+              headerAction={
+                <Action
+                  theme={theme}
+                  secondary
+                  icon="Link"
+                  label="Pair"
+                  disabled={start.isPending || checkingPairing}
+                  onPress={() => {
+                    void openPairing();
+                  }}
+                />
+              }
+            >
+              <EndpointForm
+                theme={theme}
+                history={history.data ?? []}
+                pending={connect.isPending}
+                onConnect={(endpoint) => connect.mutate(endpoint)}
+                onRemove={(host) => remove.mutate(host)}
+              />
+              <Feedback
+                theme={theme}
+                message={
+                  message(connect.error) ||
+                  message(remove.error) ||
+                  message(history.error)
+                }
+                error
+              />
+              {connect.isSuccess && (
+                <Feedback
+                  theme={theme}
+                  message={[connect.data.message, connect.data.warning]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
               )}
             </Card>
           </View>
