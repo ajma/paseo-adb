@@ -1,6 +1,6 @@
 # Android Debug Bridge
 
-Pair Android devices with a QR code, connect by pasting an IP:port, and inspect devices from Paseo.
+Pair Android devices with a QR code or pairing code, connect by pasting an IP:port, and inspect devices from Paseo.
 
 Open **ADB** in the sidebar or choose **Manage Android devices** in the Command Center.
 

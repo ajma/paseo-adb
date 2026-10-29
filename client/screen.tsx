@@ -155,8 +155,8 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
                 <Action
                   theme={theme}
                   secondary
-                  icon="QrCode"
-                  label="Pair with QR code"
+                  icon="Link"
+                  label="Pair"
                   disabled={start.isPending || checkingPairing}
                   onPress={() => {
                     void openPairing();
@@ -273,6 +273,7 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
         onCancel={() => {
           if (pairing.data) cancel.mutate(pairing.data.id);
         }}
+        onPaired={refresh}
       />
     </>
   );

@@ -38,7 +38,7 @@ export function createRunner(
           if (args[0] === "pair")
             return reject(
               new Error(
-                "ADB pairing failed. Check Wireless debugging and try a new QR code.",
+                "ADB pairing failed. Check Wireless debugging and try a fresh pairing code or QR code.",
               ),
             );
           if ((error as NodeJS.ErrnoException).code === "ENOENT")
@@ -195,7 +195,7 @@ export class AdbClient {
     );
     if (!/^Successfully paired/im.test(output))
       throw new Error(
-        "ADB pairing failed. Generate a new QR code and scan it from Wireless debugging.",
+        "ADB pairing failed. Check Wireless debugging and try a fresh pairing code or QR code.",
       );
     return output;
   }

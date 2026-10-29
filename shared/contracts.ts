@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ipSchema, ipHistoryEntrySchema } from "./endpoint";
 import { deviceTypeSchema } from "./device-type";
 import { inputTextSchema, MAX_TEXT_HISTORY } from "./input-text";
+import { manualPairingInputSchema } from "./manual-pairing";
 
 export const deviceSchema = z.object({
   serial: z.string(),
@@ -81,6 +82,15 @@ export const startPairingRpc = defineRpc({
   name: "adb.pairing.start",
   input: empty,
   output: pairingSchema,
+});
+export const pairWithCodeRpc = defineRpc({
+  name: "adb.pairing.code",
+  input: manualPairingInputSchema,
+  output: z.object({
+    message: z.string(),
+    connected: z.boolean(),
+    warning: z.string().optional(),
+  }),
 });
 export const pairingStatusRpc = defineRpc({
   name: "adb.pairing.status",

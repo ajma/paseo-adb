@@ -8,6 +8,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PluginScreenProps } from "@getpaseo/plugin/client";
@@ -121,10 +122,8 @@ it("shows the QR returned by the host and can cancel its session", async () => {
   openScreen();
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(screen.queryByRole("button", { name: "Generate QR code" })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
-  expect(
-    screen.getByRole("dialog", { name: "Pair with QR code" }),
-  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
+  expect(screen.getByRole("dialog", { name: "Pair" })).toBeTruthy();
   expect(
     await screen.findByLabelText("Android wireless debugging pairing QR code"),
   ).toBeTruthy();
@@ -150,7 +149,7 @@ it("dismisses and reopens QR pairing without replacing or canceling the active c
   api.handlers.set("adb.pairing.start", start);
   api.handlers.set("adb.pairing.cancel", cancel);
   openScreen();
-  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
   expect(
     await screen.findByLabelText("Android wireless debugging pairing QR code"),
   ).toBeTruthy();
@@ -160,7 +159,7 @@ it("dismisses and reopens QR pairing without replacing or canceling the active c
     screen.queryByLabelText("Android wireless debugging pairing QR code"),
   ).toBeNull();
   expect(cancel).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
   expect(
     await screen.findByLabelText("Android wireless debugging pairing QR code"),
   ).toBeTruthy();
@@ -178,10 +177,8 @@ it("waits for pairing status before deciding whether to generate a new code", as
   });
   api.handlers.set("adb.pairing.start", start);
   openScreen();
-  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
-  expect(
-    screen.getByRole("dialog", { name: "Pair with QR code" }),
-  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
+  expect(screen.getByRole("dialog", { name: "Pair" })).toBeTruthy();
   expect(start).not.toHaveBeenCalled();
   await act(async () => {
     resolveStatus({
@@ -203,7 +200,7 @@ it("shows pairing failures in the dialog and lets the user retry", async () => {
     throw new Error("Could not generate QR code");
   });
   openScreen();
-  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
   expect(await screen.findByText("Could not generate QR code")).toBeTruthy();
   api.handlers.set("adb.pairing.start", async () => ({
     id: "retry",
@@ -214,7 +211,7 @@ it("shows pairing failures in the dialog and lets the user retry", async () => {
   }));
   // Closing and reopening refreshes the hook's host function after the failed request.
   fireEvent.click(screen.getByRole("button", { name: "Close pairing dialog" }));
-  fireEvent.click(screen.getByRole("button", { name: "Pair with QR code" }));
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
   expect(
     await screen.findByLabelText("Android wireless debugging pairing QR code"),
   ).toBeTruthy();
@@ -227,6 +224,89 @@ it("explains unavailable ADB without hiding the connection form", async () => {
   openScreen();
   expect(await screen.findByText("ADB was not found")).toBeTruthy();
   expect(screen.getByLabelText("IP:port")).toBeTruthy();
+});
+
+it("offers pairing-code entry in the Pair dialog and refreshes connected devices", async () => {
+  const pair = vi.fn(async () => ({
+    message: "Device paired and connected.",
+    connected: true,
+  }));
+  api.handlers.set("adb.pairing.code", pair);
+  let devices: Device[] = [];
+  api.handlers.set("adb.devices", async () => ({
+    devices,
+    adbPath: "/sdk/adb",
+  }));
+  openScreen();
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
+  const dialog = within(screen.getByRole("dialog", { name: "Pair" }));
+  fireEvent.click(dialog.getByRole("tab", { name: "Pairing code" }));
+  fireEvent.change(dialog.getByLabelText("Pairing IP address"), {
+    target: { value: "192.168.1.2" },
+  });
+  fireEvent.change(dialog.getByLabelText("Pairing port"), {
+    target: { value: "30000" },
+  });
+  fireEvent.change(dialog.getByLabelText("Pairing code"), {
+    target: { value: "012345" },
+  });
+  devices = [
+    {
+      serial: "192.168.1.2:40000",
+      state: "device",
+      network: true,
+      model: "Paired phone",
+    },
+  ];
+  fireEvent.click(dialog.getByRole("button", { name: "Pair" }));
+  await waitFor(() =>
+    expect(pair).toHaveBeenCalledExactlyOnceWith({
+      host: "192.168.1.2",
+      port: 30000,
+      code: "012345",
+    }),
+  );
+  expect(await dialog.findByText("Device paired and connected.")).toBeTruthy();
+  expect(
+    (dialog.getByLabelText("Pairing code") as HTMLInputElement).value,
+  ).toBe("");
+  expect(await screen.findByText("Paired phone")).toBeTruthy();
+});
+
+it("validates pairing-code entry, shows failures, and clears the code when dismissed", async () => {
+  const pair = vi.fn(async () => {
+    throw new Error("Pairing failed. Check the code.");
+  });
+  api.handlers.set("adb.pairing.code", pair);
+  openScreen();
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
+  const dialog = within(screen.getByRole("dialog", { name: "Pair" }));
+  fireEvent.click(dialog.getByRole("tab", { name: "Pairing code" }));
+  fireEvent.change(dialog.getByLabelText("Pairing IP address"), {
+    target: { value: "192.168.1.2" },
+  });
+  fireEvent.change(dialog.getByLabelText("Pairing port"), {
+    target: { value: "30000" },
+  });
+  fireEvent.change(dialog.getByLabelText("Pairing code"), {
+    target: { value: "123" },
+  });
+  fireEvent.click(dialog.getByRole("button", { name: "Pair" }));
+  expect(dialog.getByRole("alert").textContent).toMatch(/six-digit/);
+  expect(pair).not.toHaveBeenCalled();
+  fireEvent.change(dialog.getByLabelText("Pairing code"), {
+    target: { value: "123456" },
+  });
+  fireEvent.click(dialog.getByRole("button", { name: "Pair" }));
+  expect(
+    await dialog.findByText("Pairing failed. Check the code."),
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Close pairing dialog" }));
+  fireEvent.click(screen.getByRole("button", { name: "Pair" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Pairing code" }));
+  expect(
+    (screen.getByLabelText("Pairing code") as HTMLInputElement).value,
+  ).toBe("");
 });
 
 function textDevices() {

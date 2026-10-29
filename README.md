@@ -10,7 +10,7 @@ _The plugin screen with example devices and a demo QR code._
 
 ## Connect once. Come back faster.
 
-- **Scan to pair.** Open **Pair with QR code** and scan the code in the popup from Android's Wireless debugging settings. Paseo ADB handles discovery, pairing, and connection.
+- **Pair your way.** Open **Pair** to scan a QR code or enter the IP, pairing port, and pairing code from Android's Wireless debugging settings. Paseo ADB handles pairing and tries to connect automatically.
 - **Paste and go.** Copy the full `IP:port` from your device into one field, then hit Connect.
 - **Keep your favorite devices close.** Your last five successful IPs stay handy. Pick one and type its current port.
 - **Know what's connected.** See make, model, Android version, and connection status in compact rows that refresh automatically.
@@ -33,8 +33,10 @@ You'll need **Paseo 0.12.0+** and **Android SDK Platform-Tools** on the Paseo ho
 ## Pair your first phone
 
 1. Put your phone and Paseo host on the same Wi-Fi network.
-2. In Paseo ADB, choose **Pair with QR code** to open the pairing dialog.
+2. In Paseo ADB, choose **Pair**, then use the **QR code** tab.
 3. On your phone, open **Developer options → Wireless debugging → Pair device with QR code** and scan it.
+
+Prefer a code? Choose **Pairing code** in the dialog and enter the IP, port, and six-digit code from your phone's **Pair device with pairing code** screen.
 
 Already paired? Paste the address from the main Wireless debugging screen and choose **Connect**.
 

@@ -11,6 +11,7 @@ import {
   historyRpc,
   removeHistoryRpc,
   startPairingRpc,
+  pairWithCodeRpc,
   pairingStatusRpc,
   cancelPairingRpc,
 } from "./shared/contracts";
@@ -19,6 +20,7 @@ import { AdbClient, createRunner, findAdb } from "./server/adb";
 import { HistoryStore } from "./server/history";
 import { PairingManager } from "./server/pairing";
 import { TextHistoryStore, sendTextWithHistory } from "./server/text-history";
+import { pairWithCode } from "./server/manual-pairing";
 
 export default function contribute(server: PluginServerContext) {
   const lifetime = new AbortController();
@@ -94,6 +96,9 @@ export default function contribute(server: PluginServerContext) {
   });
   server.handle(startPairingRpc, async () =>
     (await getBackend()).pairing.start(),
+  );
+  server.handle(pairWithCodeRpc, async (input) =>
+    pairWithCode((await getBackend()).adb, history, input),
   );
   server.handle(pairingStatusRpc, () => pairing?.status() ?? null);
   server.handle(cancelPairingRpc, ({ id }) => {

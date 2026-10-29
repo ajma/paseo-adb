@@ -4,7 +4,7 @@ import { vi } from "vitest";
 // open state and dismiss callback through a minimal host UI stand-in.
 vi.mock("@getpaseo/plugin/client/react-native", async () => {
   const { createElement } = await import("react");
-  const { View, Text, Pressable } = await import("react-native");
+  const { View, Text, Pressable, TextInput } = await import("react-native");
   const Modal = Object.assign(
     ({
       open,
@@ -39,5 +39,5 @@ vi.mock("@getpaseo/plugin/client/react-native", async () => {
         createElement(View, null, children),
     },
   );
-  return { Icon: () => null, Modal };
+  return { Icon: () => null, Modal, TextInput };
 });

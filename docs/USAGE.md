@@ -2,7 +2,7 @@
 
 Manage Android Debug Bridge from Paseo's **ADB** sidebar screen.
 
-- Pair a phone with a locally generated QR code.
+- Pair a phone with a locally generated QR code or its IP, pairing port, and six-digit pairing code.
 - See USB, wireless, and emulator transports, including offline and unauthorized devices.
 - See manufacturer, model, Android version, and serial/address when the device allows it.
 - Paste the complete `IP:port` from Android's Wireless debugging screen.
@@ -28,15 +28,25 @@ Open **ADB** in the sidebar, or search **Manage Android devices** in the Command
 
 1. Connect the phone and the selected Paseo daemon machine to the same network.
 2. Enable Developer options and Wireless debugging on the phone.
-3. In Paseo, choose **Pair with QR code**. A dialog opens and generates the code.
+3. In Paseo, choose **Pair**. The **QR code** tab opens and generates the code.
 4. On the phone, open **Wireless debugging → Pair device with QR code** and scan the displayed code.
 5. The plugin discovers the phone, pairs it, and connects using its advertised connection port.
 
 The code expires after two minutes. **Cancel pairing** and **Generate new code** invalidate the current plugin session. A session already in progress is shared with other Paseo clients viewing this daemon.
 
-Closing the dialog leaves an active pairing session running. Choose **Pair with QR code** again to reopen the same session; use **Cancel pairing** inside the dialog to stop it. On narrow screens and phones, the dialog appears as a sheet.
+Closing the dialog leaves an active QR pairing session running. Choose **Pair** again to reopen the same session; use **Cancel pairing** inside the **QR code** tab to stop it. On narrow screens and phones, the dialog appears as a sheet.
 
 If pairing succeeds but the connection port cannot be discovered, the screen reports **Paired**. Paste the main Wireless debugging screen's address into the manual field to connect.
+
+## Pair with a pairing code
+
+1. On the device, open **Developer options → Wireless debugging → Pair device with pairing code**.
+2. In Paseo, choose **Pair → Pairing code**.
+3. Enter the **IP address**, **Pairing port**, and six-digit **Pairing code** displayed on the device, then choose **Pair** inside the dialog.
+
+After pairing, the plugin tries to discover and connect to the device's separate connection port. If discovery or connection is unavailable, pairing remains successful; use the IP and port from the **main Wireless debugging screen** in **Connect a device**. The pairing port cannot be used as the connection port.
+
+Pairing codes are not saved to history and are cleared from the form after success, changing tabs, or closing the dialog. Connected devices are added to recent IPs, just like a normal connection.
 
 ## Connect by address
 
