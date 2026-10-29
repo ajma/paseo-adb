@@ -17,6 +17,8 @@ _The plugin screen with example devices and a demo QR code._
 - **Recognize your hardware.** Phones, Wear OS watches, tablets, TVs, and emulators get matching icons when Android reports their device type.
 - **Stay in your workflow.** Connect and disconnect network devices from the sidebar, with a host picker for your Paseo machines.
 
+- **Type on your device.** Open **Send text** on a connected device, paste your text, and send it to the focused field through ADB.
+
 ## Get started
 
 Install from the Paseo CLI:

@@ -58,6 +58,14 @@ Online, authorized devices report their type through `ro.build.characteristics` 
 
 Android documents its device-category features in the [PackageManager reference](https://developer.android.com/reference/android/content/pm/PackageManager#FEATURE_WATCH).
 
+### Send text
+
+On a connected USB, wireless, or emulator device, choose **Send text**. Focus the destination text field on the Android device, type or paste your text into Paseo, then choose **Send text** or press Return. The result appears below the form; your text stays available to edit or send again.
+
+Focus the Paseo text field to see a dropdown of the last 20 distinct successfully sent strings, newest first. Choose a string to fill the field, then send it when ready. Use **×** beside an entry to remove it from history. History is shared across devices on the selected host and survives plugin reloads. It is saved as plain text in `<PASEO_HOME or ~/.paseo>/plugin-data/adb/text-history.json`, accessible only to the daemon user.
+
+This uses `adb -s <serial> shell input text` on the selected host. Enter the text itself. Spaces, quotes, and shell punctuation are sent literally, including `%s`. Text is limited to 2,000 printable ASCII characters on one line; Unicode, emoji, and line breaks are rejected because this input method depends on Android's virtual keyboard character map. Sending does not press Enter on the device. Failed requests are never retried automatically, since the device may already have received part of the text.
+
 ## ADB discovery and data
 
 ADB runs on the selected daemon, even when you view Paseo on another computer or phone. Discovery checks `ADB_PATH`, `ANDROID_HOME`, `ANDROID_SDK_ROOT`, common SDK locations, then `PATH`. Set `ADB_PATH` to an executable file path if needed, then reload the plugin.

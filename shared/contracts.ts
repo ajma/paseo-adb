@@ -2,6 +2,7 @@ import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
 import { ipSchema } from "./endpoint";
 import { deviceTypeSchema } from "./device-type";
+import { inputTextSchema, MAX_TEXT_HISTORY } from "./input-text";
 
 export const deviceSchema = z.object({
   serial: z.string(),
@@ -47,6 +48,24 @@ export const disconnectRpc = defineRpc({
   name: "adb.disconnect",
   input: z.object({ serial: z.string().min(1).max(300) }),
   output: z.object({ message: z.string() }),
+});
+export const inputTextRpc = defineRpc({
+  name: "adb.input.text",
+  input: z.object({
+    serial: z.string().min(1).max(300),
+    text: inputTextSchema,
+  }),
+  output: z.object({ message: z.string(), warning: z.string().optional() }),
+});
+export const textHistoryRpc = defineRpc({
+  name: "adb.input.history",
+  input: empty,
+  output: z.array(inputTextSchema).max(MAX_TEXT_HISTORY),
+});
+export const removeTextHistoryRpc = defineRpc({
+  name: "adb.input.history.remove",
+  input: z.object({ text: inputTextSchema }),
+  output: empty,
 });
 export const historyRpc = defineRpc({
   name: "adb.history",

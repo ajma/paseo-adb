@@ -1,4 +1,5 @@
-import { it, expect } from "vitest";
+import { it, expect, vi } from "vitest";
+import { execFileSync } from "node:child_process";
 import { AdbClient } from "./adb";
 
 it("does not treat a zero-exit ADB failure as a connection", async () => {
@@ -85,4 +86,83 @@ it("keeps device metadata when feature detection fails", async () => {
     model: "Mystery Device",
     deviceType: "unknown",
   });
+});
+
+it
+  .skipIf(process.platform === "win32")
+  .each([
+    "  hello world  ",
+    'It\'s a test: "quotes" & punctuation; $(printf INJECTED) `printf INJECTED` | < > \\ $HOME',
+    "%s %%s %s%s 100% safe",
+    Array.from({ length: 95 }, (_, i) => String.fromCharCode(i + 32)).join(""),
+  ])(
+  "sends literal text to the selected device through the remote shell: %s",
+  async (text) => {
+    const calls: string[][] = [];
+    const adb = new AdbClient("adb", async (args) => {
+      calls.push(args);
+      if (args[0] === "devices")
+        return "List of devices attached\nUSB device\n192.168.1.2:5555 device\n";
+      expect(args.slice(0, 3)).toEqual(["-s", "192.168.1.2:5555", "shell"]);
+      // Exercise a real shell with an input stand-in that captures arguments.
+      const output = execFileSync(
+        "/bin/sh",
+        [
+          "-c",
+          [
+            'input() { [ "$#" -eq 2 ] && [ "$1" = text ] || exit 99; printf \'%s\\0\' "$2"; }',
+            args[3],
+          ].join("\n"),
+        ],
+        { encoding: "utf8" },
+      );
+      const typed = output
+        .split("\0")
+        .map((part) => part.replace(/%s/g, " "))
+        .join("");
+      expect(typed).toBe(text);
+      return "";
+    });
+    await expect(adb.inputText("192.168.1.2:5555", text)).resolves.toContain(
+      "Text sent",
+    );
+    expect(calls).toHaveLength(2);
+  },
+);
+
+it.each(["USB", "OFFLINE", "UNAUTHORIZED", "missing", "-a"])(
+  "refuses to send text to an unavailable or unauthorized target: %s",
+  async (serial) => {
+    const run = vi.fn(
+      async () =>
+        "List of devices attached\nUSB offline\nOFFLINE offline\nUNAUTHORIZED unauthorized\n",
+    );
+    const adb = new AdbClient("adb", run);
+    await expect(adb.inputText(serial, "hello")).rejects.toThrow(
+      /connected, authorized/,
+    );
+    expect(run).toHaveBeenCalledTimes(1);
+  },
+);
+
+it.each(["", "hello\nworld", "emoji 😀", "a\0b", "x".repeat(2001)])(
+  "rejects unsupported text before running ADB",
+  async (text) => {
+    const run = vi.fn(async () => "");
+    await expect(
+      new AdbClient("adb", run).inputText("USB", text),
+    ).rejects.toThrow();
+    expect(run).not.toHaveBeenCalled();
+  },
+);
+
+it("propagates an input failure without retrying", async () => {
+  const run = vi.fn(async (args: string[]) => {
+    if (args[0] === "devices") return "List of devices attached\nUSB device\n";
+    throw new Error("device went offline");
+  });
+  await expect(
+    new AdbClient("adb", run).inputText("USB", "hello"),
+  ).rejects.toThrow("device went offline");
+  expect(run).toHaveBeenCalledTimes(2);
 });

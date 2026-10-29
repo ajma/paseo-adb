@@ -7,6 +7,7 @@ import type { Device } from "../shared/contracts";
 import { parseEndpoint } from "../shared/endpoint";
 import { parseDevices, parseServices } from "./parsers";
 import { detectDeviceType } from "./device-type";
+import { inputTextSchema } from "../shared/input-text";
 
 export type CommandOptions = { signal?: AbortSignal; timeout?: number };
 export type CommandRunner = (
@@ -158,6 +159,22 @@ export class AdbClient {
     if (!/^disconnected /im.test(output))
       throw new Error(output || "ADB could not disconnect this device.");
     return output;
+  }
+  async inputText(serial: string, value: string): Promise<string> {
+    const text = inputTextSchema.parse(value);
+    const devices = parseDevices(await this.run(["devices", "-l"]));
+    if (!devices.some((d) => d.serial === serial && d.state === "device"))
+      throw new Error("Choose a connected, authorized device to send text.");
+
+    // ADB joins shell arguments before the device shell parses them. Quote for
+    // that shell too, preserving spaces and treating punctuation as literal text.
+    // Android expands %s to a space, so split that sequence across input calls.
+    const command = text
+      .split(/(?<=%)(?=s)/)
+      .map((part) => `input text '${part.replace(/'/g, "'\\''")}'`)
+      .join(" && ");
+    await this.run(["-s", serial, "shell", command], { timeout: 30000 });
+    return "Text sent. Check the focused field on the device.";
   }
   async services(signal?: AbortSignal) {
     const output = await this.run(["mdns", "services"], { signal });

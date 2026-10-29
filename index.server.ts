@@ -5,6 +5,9 @@ import {
   devicesRpc,
   connectRpc,
   disconnectRpc,
+  inputTextRpc,
+  textHistoryRpc,
+  removeTextHistoryRpc,
   historyRpc,
   removeHistoryRpc,
   startPairingRpc,
@@ -15,6 +18,7 @@ import { parseEndpoint } from "./shared/endpoint";
 import { AdbClient, createRunner, findAdb } from "./server/adb";
 import { HistoryStore } from "./server/history";
 import { PairingManager } from "./server/pairing";
+import { TextHistoryStore, sendTextWithHistory } from "./server/text-history";
 
 export default function contribute(server: PluginServerContext) {
   const lifetime = new AbortController();
@@ -24,6 +28,14 @@ export default function contribute(server: PluginServerContext) {
       "plugin-data",
       "adb",
       "history.json",
+    ),
+  );
+  const textHistory = new TextHistoryStore(
+    join(
+      process.env.PASEO_HOME || join(homedir(), ".paseo"),
+      "plugin-data",
+      "adb",
+      "text-history.json",
     ),
   );
   let backend: Promise<{ adb: AdbClient; pairing: PairingManager }> | undefined;
@@ -61,6 +73,14 @@ export default function contribute(server: PluginServerContext) {
   server.handle(disconnectRpc, async ({ serial }) => ({
     message: await (await getBackend()).adb.disconnect(serial),
   }));
+  server.handle(inputTextRpc, async (input) =>
+    sendTextWithHistory((await getBackend()).adb, textHistory, input),
+  );
+  server.handle(textHistoryRpc, () => textHistory.list());
+  server.handle(removeTextHistoryRpc, async ({ text }) => {
+    await textHistory.remove(text);
+    return {};
+  });
   server.handle(historyRpc, () => history.list());
   server.handle(removeHistoryRpc, async ({ host }) => {
     await history.remove(host);
