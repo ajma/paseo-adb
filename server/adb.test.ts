@@ -38,12 +38,13 @@ it("reads make, model, and Android version from the authorized device", async ()
   const adb = new AdbClient("adb", async (args) =>
     args[0] === "devices"
       ? "List of devices attached\nABC device model:Pixel_6\n"
-      : "[ro.product.manufacturer]: [Google]\n[ro.product.model]: [Pixel 6]\n[ro.build.version.release]: [16]\n",
+      : "[ro.product.manufacturer]: [Google]\n[ro.product.model]: [Pixel 6]\n[ro.build.version.release]: [16]\n[ro.serialno]: [PHONE1]\n",
   );
   expect((await adb.devices())[0]).toMatchObject({
     manufacturer: "Google",
     model: "Pixel 6",
     androidVersion: "16",
+    hardwareSerial: "PHONE1",
   });
 });
 it("rejects disconnecting arbitrary or USB serials", async () => {

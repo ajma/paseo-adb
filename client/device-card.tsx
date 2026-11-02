@@ -6,6 +6,8 @@ import type { Device } from "../shared/contracts";
 import { Action } from "./ui";
 import { deviceTypeIcons } from "../shared/device-type";
 import { DeviceTextInput } from "./device-text-input";
+import { DeviceNameInput } from "./device-name-input";
+import { deviceDisplayName, originalDeviceName } from "../shared/device-name";
 export function DeviceCard({
   theme,
   device,
@@ -17,10 +19,11 @@ export function DeviceCard({
   pending: boolean;
   onDisconnect: (serial: string) => void;
 }) {
-  const { manufacturer, model, serial, state } = device;
-  const title = [manufacturer, model].filter(Boolean).join(" ") || serial;
+  const { serial, state } = device;
+  const title = deviceDisplayName(device);
   const online = state === "device";
   const [inputOpen, setInputOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   return (
     <View
       style={{
@@ -78,7 +81,16 @@ export function DeviceCard({
                 flexShrink: 1,
               }}
             >
-              {title}
+              {device.customName ? (
+                <>
+                  {device.customName}{" "}
+                  <Text style={{ color: theme.colors.foregroundMuted }}>
+                    ({originalDeviceName(device)})
+                  </Text>
+                </>
+              ) : (
+                title
+              )}
             </Text>
             <Text
               style={{
@@ -150,6 +162,16 @@ export function DeviceCard({
             </Text>
           )}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {!renameOpen && (
+              <Action
+                theme={theme}
+                secondary
+                label="Rename"
+                accessibilityLabel={`Rename ${serial}`}
+                disabled={pending}
+                onPress={() => setRenameOpen(true)}
+              />
+            )}
             {online && !inputOpen && (
               <Action
                 theme={theme}
@@ -173,6 +195,13 @@ export function DeviceCard({
           </View>
         </View>
       </View>
+      {renameOpen && (
+        <DeviceNameInput
+          theme={theme}
+          device={device}
+          onClose={() => setRenameOpen(false)}
+        />
+      )}
       {online && inputOpen && (
         <DeviceTextInput
           theme={theme}

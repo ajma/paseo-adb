@@ -320,6 +320,86 @@ function textDevices() {
   }));
 }
 
+it("renames a device, keeps the original in parentheses, and can restore its name", async () => {
+  let device: Device = {
+    serial: "USB",
+    state: "device",
+    network: false,
+    manufacturer: "Google",
+    model: "Pixel 6",
+  };
+  api.handlers.set("adb.devices", async () => ({
+    devices: [device],
+    adbPath: "/sdk/adb",
+  }));
+  const rename = vi.fn(async (input: unknown) => {
+    const { name } = input as { name: string };
+    device = {
+      ...device,
+      customName: name || undefined,
+      originalName: name ? "Google Pixel 6" : undefined,
+    };
+    return {};
+  });
+  api.handlers.set("adb.devices.rename", rename);
+  openScreen();
+  fireEvent.click(await screen.findByRole("button", { name: "Rename USB" }));
+  fireEvent.change(screen.getByLabelText("Name for USB"), {
+    target: { value: "  Desk phone  " },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save name" }));
+  expect(await screen.findByText("Desk phone")).toHaveProperty(
+    "textContent",
+    "Desk phone (Google Pixel 6)",
+  );
+  expect(rename).toHaveBeenCalledWith({ serial: "USB", name: "Desk phone" });
+  fireEvent.click(await screen.findByRole("button", { name: "Rename USB" }));
+  expect(
+    (screen.getByLabelText("Name for USB") as HTMLInputElement).value,
+  ).toBe("Desk phone");
+  fireEvent.change(screen.getByLabelText("Name for USB"), {
+    target: { value: "Test phone" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(rename).toHaveBeenCalledTimes(1);
+  expect(screen.getByText("Desk phone")).toHaveProperty(
+    "textContent",
+    "Desk phone (Google Pixel 6)",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Rename USB" }));
+  fireEvent.change(screen.getByLabelText("Name for USB"), {
+    target: { value: "" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save name" }));
+  expect(await screen.findByText("Google Pixel 6")).toBeTruthy();
+  expect(rename).toHaveBeenLastCalledWith({ serial: "USB", name: "" });
+});
+
+it("keeps a rename draft on save failure and prevents duplicate saves", async () => {
+  textDevices();
+  let rejectSave!: (error: Error) => void;
+  const rename = vi.fn(
+    () =>
+      new Promise((_, reject) => {
+        rejectSave = reject;
+      }),
+  );
+  api.handlers.set("adb.devices.rename", rename);
+  openScreen();
+  fireEvent.click(await screen.findByRole("button", { name: "Rename USB" }));
+  const input = screen.getByLabelText("Name for USB") as HTMLInputElement;
+  fireEvent.change(input, { target: { value: "Desk phone" } });
+  const save = screen.getByRole("button", { name: "Save name" });
+  fireEvent.click(save);
+  fireEvent.click(save);
+  await waitFor(() => expect(rename).toHaveBeenCalledTimes(1));
+  expect(input.readOnly).toBe(true);
+  rejectSave(new Error("Could not save device name"));
+  expect(await screen.findByText("Could not save device name")).toBeTruthy();
+  expect(input.value).toBe("Desk phone");
+  expect(screen.queryByText("Desk phone")).toBeNull();
+});
+
 it("sends text from the compact screen to the chosen device and keeps the draft", async () => {
   textDevices();
   const send = vi.fn(async () => ({ message: "Text sent." }));

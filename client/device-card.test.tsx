@@ -48,5 +48,6 @@ it("keeps unauthorized USB devices visible with authorization guidance", () => {
   );
   expect(screen.getByText("ABC")).toBeTruthy();
   expect(screen.getByText(/Approve the debugging prompt/)).toBeTruthy();
-  expect(screen.queryByRole("button")).toBeNull();
+  expect(screen.getByRole("button", { name: "Rename ABC" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /Disconnect/ })).toBeNull();
 });

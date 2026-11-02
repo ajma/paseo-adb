@@ -4,6 +4,7 @@ import { ipSchema, ipHistoryEntrySchema } from "./endpoint";
 import { deviceTypeSchema } from "./device-type";
 import { inputTextSchema, MAX_TEXT_HISTORY } from "./input-text";
 import { manualPairingInputSchema } from "./manual-pairing";
+import { deviceNameSchema } from "./device-name";
 
 export const deviceSchema = z.object({
   serial: z.string(),
@@ -15,6 +16,9 @@ export const deviceSchema = z.object({
   product: z.string().optional(),
   transportId: z.string().optional(),
   deviceType: deviceTypeSchema.optional(),
+  hardwareSerial: z.string().optional(),
+  customName: deviceNameSchema.optional(),
+  originalName: z.string().optional(),
 });
 export type Device = z.infer<typeof deviceSchema>;
 export const pairingSchema = z.object({
@@ -44,6 +48,14 @@ export const connectRpc = defineRpc({
   name: "adb.connect",
   input: z.object({ endpoint: z.string().max(300) }),
   output: z.object({ message: z.string(), warning: z.string().optional() }),
+});
+export const renameDeviceRpc = defineRpc({
+  name: "adb.devices.rename",
+  input: z.object({
+    serial: z.string().min(1).max(300),
+    name: deviceNameSchema,
+  }),
+  output: empty,
 });
 export const disconnectRpc = defineRpc({
   name: "adb.disconnect",

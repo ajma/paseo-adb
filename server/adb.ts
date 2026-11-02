@@ -111,6 +111,15 @@ export class AdbClient {
                 (m) => [m[1], m[2]],
               ),
             );
+            const hardwareSerial = [
+              properties["ro.serialno"],
+              properties["ro.boot.serialno"],
+            ]
+              .map((value) => value?.trim())
+              .find((value) => value && value.toLowerCase() !== "unknown");
+            // Emulator builds can share hardware serials; retain their transport identity.
+            if (hardwareSerial && !device.serial.startsWith("emulator-"))
+              device.hardwareSerial = hardwareSerial;
             if (properties["ro.product.manufacturer"])
               device.manufacturer = properties["ro.product.manufacturer"];
             if (properties["ro.product.model"])

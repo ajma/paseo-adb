@@ -14,6 +14,7 @@ _The plugin screen with example devices and a demo QR code._
 - **Paste and go.** Copy the full `IP:port` from your device into one field, then hit Connect.
 - **Keep your favorite devices close.** Your last five successful IPs stay handy. Pick one and type its current port.
 - **Know what's connected.** See make, model, Android version, and connection status in compact rows that refresh automatically.
+- **Name your devices.** Choose **Rename** to show a custom name with the original in parentheses, like `Desk phone (Google Pixel 6)`. Names are saved on the selected host; clear a name to restore the original.
 - **Recognize your hardware.** Phones, Wear OS watches, tablets, TVs, and emulators get matching icons when Android reports their device type.
 - **Stay in your workflow.** Connect and disconnect network devices from the sidebar, with a host picker for your Paseo machines.
 - **Type on your device.** Open **Send text** on a connected device, paste your text, and send it to the focused field through ADB.

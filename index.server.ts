@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import {
   devicesRpc,
+  renameDeviceRpc,
   connectRpc,
   disconnectRpc,
   inputTextRpc,
@@ -21,9 +22,18 @@ import { HistoryStore } from "./server/history";
 import { PairingManager } from "./server/pairing";
 import { TextHistoryStore, sendTextWithHistory } from "./server/text-history";
 import { pairWithCode } from "./server/manual-pairing";
+import { DeviceNameStore } from "./server/device-names";
 
 export default function contribute(server: PluginServerContext) {
   const lifetime = new AbortController();
+  const deviceNames = new DeviceNameStore(
+    join(
+      process.env.PASEO_HOME || join(homedir(), ".paseo"),
+      "plugin-data",
+      "adb",
+      "device-names.json",
+    ),
+  );
   const history = new HistoryStore(
     join(
       process.env.PASEO_HOME || join(homedir(), ".paseo"),
@@ -56,13 +66,23 @@ export default function contribute(server: PluginServerContext) {
 
   server.handle(devicesRpc, async () => {
     const { adb } = await getBackend();
-    const devices = await adb.devices();
+    const devices = await deviceNames.apply(await adb.devices());
     try {
       await history.rememberDevices(devices);
     } catch {
       // Saved descriptions are optional; history failures must not hide devices.
     }
     return { devices, adbPath: adb.path };
+  });
+  server.handle(renameDeviceRpc, async ({ serial, name }) => {
+    const devices = await (await getBackend()).adb.devices();
+    const device = devices.find((device) => device.serial === serial);
+    if (!device)
+      throw new Error(
+        "This device is no longer listed. Refresh and try again.",
+      );
+    await deviceNames.rename(device, name);
+    return {};
   });
   server.handle(connectRpc, async ({ endpoint }) => {
     const target = parseEndpoint(endpoint);

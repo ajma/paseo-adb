@@ -66,6 +66,12 @@ The list refreshes every five seconds while open. **Refresh** triggers an immedi
 
 Offline and unauthorized devices remain visible. Metadata requires an online, authorized connection. Approve the debugging prompt on a USB-connected phone to make details available. **Disconnect** is available for network transports; unplug USB devices to disconnect them.
 
+### Rename devices
+
+Choose **Rename** on a device, enter a custom name, and choose **Save name**. The original name stays in parentheses, for example `Desk phone (Google Pixel 6)`, including after later renames. Clear the field and save to restore the original display. Recent IP descriptions also pick up the custom name while the device is connected.
+
+Names are saved on the selected host in `<PASEO_HOME or ~/.paseo>/plugin-data/adb/device-names.json`. When Android reports a hardware serial, names follow the device across USB and wireless address changes. Otherwise they apply to the current ADB serial/address; emulators use their ADB serial.
+
 ### Device type icons
 
 Online, authorized devices report their type through `ro.build.characteristics` and, when necessary, `pm list features`. Wear OS devices declaring `android.hardware.type.watch` receive a watch icon. Phones, tablets, TVs, automotive devices, and emulators also have category icons. Devices that cannot report a category use a generic device icon; the plugin does not guess from model names.

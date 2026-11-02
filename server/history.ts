@@ -9,6 +9,7 @@ import {
   type IpHistoryEntry,
 } from "../shared/endpoint";
 import type { Device } from "../shared/contracts";
+import { deviceDisplayName } from "../shared/device-name";
 
 // Read the original IP-only format as well as entries with saved descriptions.
 const schema = z
@@ -88,11 +89,7 @@ export class HistoryStore {
         continue;
       try {
         const host = canonicalIp(parseEndpoint(device.serial).host);
-        const description = [device.manufacturer, device.model]
-          .filter(Boolean)
-          .join(" ")
-          .trim()
-          .slice(0, 300);
+        const description = deviceDisplayName(device).trim().slice(0, 300);
         if (description) descriptions.set(host, description);
       } catch {
         // USB serials and mDNS service names do not contain an IP address.
