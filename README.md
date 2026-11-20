@@ -12,7 +12,8 @@ _The plugin screen with example devices and a demo QR code._
 
 - **Pair your way.** Open **Pair** to scan a QR code or enter the IP, pairing port, and pairing code from Android's Wireless debugging settings. Paseo ADB handles pairing and tries to connect automatically.
 - **Paste and go.** Copy the full `IP:port` from your device into one field, then hit Connect.
-- **Keep your favorite devices close.** Your last five successful IPs stay handy. Pick one and type its current port.
+- **Switch from USB to VPN.** Move an authorized USB device onto ADB port `5555` using its active Tailscale, WireGuard, ZeroTier, or NetBird connection.
+- **Keep your favorite devices close.** Reuse your last five successful IPs, including the fixed port for USB-to-VPN connections.
 - **Know what's connected.** See make, model, Android version, and connection status in compact rows that refresh automatically.
 - **Name your devices.** Choose **Rename** to show a custom name with the original in parentheses, like `Desk phone (Google Pixel 6)`. Names are saved on the selected host; clear a name to restore the original.
 - **Recognize your hardware.** Phones, Wear OS watches, tablets, TVs, and emulators get matching icons when Android reports their device type.
@@ -24,10 +25,10 @@ _The plugin screen with example devices and a demo QR code._
 Install from the Paseo CLI:
 
 ```sh
-paseo plugin install npm:paseo-adb@0.1.0
+paseo plugin install npm:paseo-adb@0.2.0
 ```
 
-Or paste `npm:paseo-adb@0.1.0` into **Settings → Plugins**. Enable plugins, then open **ADB** in the sidebar. You can also install from source with `git:ajma/paseo-adb`.
+Or paste `npm:paseo-adb@0.2.0` into **Settings → Plugins**. Enable plugins, then open **ADB** in the sidebar. You can also install from source with `git:ajma/paseo-adb`.
 
 You'll need **Paseo 0.12.0+** and **Android SDK Platform-Tools** on the Paseo host that will connect to your devices.
 

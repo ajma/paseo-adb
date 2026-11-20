@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   devicesRpc,
   connectRpc,
+  connectVpnRpc,
   disconnectRpc,
   historyRpc,
   removeHistoryRpc,
@@ -34,6 +35,7 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
     listHistory = useRpc(historyRpc),
     getPairing = useRpc(pairingStatusRpc);
   const doConnect = useRpc(connectRpc),
+    doConnectVpn = useRpc(connectVpnRpc),
     doDisconnect = useRpc(disconnectRpc),
     doRemove = useRpc(removeHistoryRpc);
   const doStart = useRpc(startPairingRpc),
@@ -64,6 +66,11 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
   const connect = useMutation({
     mutationFn: (endpoint: string) => doConnect({ endpoint }),
     onSuccess: refresh,
+  });
+  const connectVpn = useMutation({
+    mutationFn: (input: { serial: string; host: string }) =>
+      doConnectVpn(input),
+    onSettled: refresh,
   });
   const disconnect = useMutation({
     mutationFn: (serial: string) => doDisconnect({ serial }),
@@ -167,6 +174,18 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
                 error
                 message={message(devices.error) || message(disconnect.error)}
               />
+              <Feedback
+                theme={theme}
+                error={connectVpn.isError}
+                message={
+                  connectVpn.isPending
+                    ? "Connecting over VPN…"
+                    : message(connectVpn.error) ||
+                      [connectVpn.data?.message, connectVpn.data?.warning]
+                        .filter(Boolean)
+                        .join(" ")
+                }
+              />
               {devices.isPending && (
                 <Feedback theme={theme} message="Looking for devices…" />
               )}
@@ -198,6 +217,10 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
                     disconnect.variables === device.serial
                   }
                   onDisconnect={(serial) => disconnect.mutate(serial)}
+                  vpnPending={connectVpn.isPending}
+                  onVpnConnect={(serial, host) =>
+                    connectVpn.mutate({ serial, host })
+                  }
                 />
               ))}
               {devices.data && (
@@ -216,7 +239,7 @@ export function AdbScreen({ theme, layout }: PluginScreenProps) {
               theme={theme}
               title="Connect a device"
               icon="PlugZap"
-              detail="Paste an address or reuse a recent IP with a new port."
+              detail="Paste an address or choose one from Recent IPs."
               headerAction={
                 <Action
                   theme={theme}

@@ -13,13 +13,17 @@ export function DeviceCard({
   device,
   pending,
   onDisconnect,
+  vpnPending,
+  onVpnConnect,
 }: {
   theme: PluginTheme;
   device: Device;
   pending: boolean;
   onDisconnect: (serial: string) => void;
+  vpnPending: boolean;
+  onVpnConnect: (serial: string, host: string) => void;
 }) {
-  const { serial, state } = device;
+  const { serial, state, vpn } = device;
   const title = deviceDisplayName(device);
   const online = state === "device";
   const [inputOpen, setInputOpen] = useState(false);
@@ -180,6 +184,16 @@ export function DeviceCard({
                 accessibilityLabel={`Send text to ${serial}`}
                 disabled={pending}
                 onPress={() => setInputOpen(true)}
+              />
+            )}
+            {online && vpn && (
+              <Action
+                theme={theme}
+                secondary
+                label={`Switch to ${vpn.provider} ADB`}
+                accessibilityLabel={`Switch to ${vpn.provider} ADB for ${serial}`}
+                disabled={vpnPending}
+                onPress={() => onVpnConnect(serial, vpn.host)}
               />
             )}
             {device.network && (

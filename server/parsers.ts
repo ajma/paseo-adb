@@ -26,6 +26,7 @@ export function parseDevices(output: string): Device[] {
         serial,
         state: state === "no" ? "no permissions" : state,
         network: serial.includes(":") || serial.includes("._adb"),
+        ...(props.usb ? { usb: true } : {}),
         ...(props.model ? { model: props.model.replace(/_/g, " ") } : {}),
         ...(props.product ? { product: props.product } : {}),
         ...(props.transport_id ? { transportId: props.transport_id } : {}),

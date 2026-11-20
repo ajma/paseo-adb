@@ -6,7 +6,7 @@ Manage Android Debug Bridge from Paseo's **ADB** sidebar screen.
 - See USB, wireless, and emulator transports, including offline and unauthorized devices.
 - See manufacturer, model, Android version, and serial/address when the device allows it.
 - Paste the complete `IP:port` from Android's Wireless debugging screen.
-- Reuse the last **five distinct successful IPs**. Clicking an IP fills `IP:`, focuses the field, and puts the cursor after the colon. Enter the current port and connect.
+- Reuse the last **five distinct successful IPs**. Choose an IP to fill the address field, then enter the current port if needed and connect.
 - Disconnect network devices and remove individual history entries.
 
 ## Install
@@ -48,6 +48,14 @@ After pairing, the plugin tries to discover and connect to the device's separate
 
 Pairing codes are not saved to history and are cleared from the form after success, changing tabs, or closing the dialog. Connected devices are added to recent IPs, just like a normal connection.
 
+## Switch from USB to ADB over a VPN
+
+1. Connect the device over USB and approve USB debugging. Connect Tailscale, WireGuard, ZeroTier, or NetBird on Android, and make sure the selected Paseo host can reach the device over that VPN.
+2. On the USB device card, choose **Switch to Tailscale ADB** or the corresponding action for your VPN.
+3. Paseo enables TCP mode on port `5555` for the selected USB device and connects to the device's VPN IP. Unplug USB when Paseo confirms the network connection.
+
+To reconnect, choose the saved VPN address in **Recent IPs** and select **Connect**. Android can reset TCP mode after a reboot. If that happens, plug the device back in and switch again.
+
 ## Connect by address
 
 Copy the address from the phone's **main Wireless debugging screen**, paste it into the single **IP:port** field, then choose **Connect** or press Return.
@@ -56,7 +64,7 @@ Example: `192.168.1.80:37123`. IPv6 uses brackets: `[2001:db8::1]:37123`.
 
 The pairing-code dialog's port is different from the connection port. Manual connection assumes the phone already trusts the host, or that the device supports an existing ADB TCP connection. Use QR pairing first for a new wireless-debugging host.
 
-History contains only IPs from successful connections, ordered by most recent use, capped at five. Ports are intentionally not stored because Android can change them. QR credentials are never written to history.
+History contains only IPs from successful connections, ordered by most recent use, capped at five. A successful USB-to-VPN switch also saves the fixed port `5555`. For Wireless debugging, enter the current port shown on Android. QR credentials are never written to history.
 
 Recent IPs show the last known phone make and model beside the address. Descriptions are learned from connected devices and remain available after disconnecting or reloading the plugin. Existing saved IPs pick up descriptions the next time those devices connect; entries without known metadata show **Device details unavailable**.
 

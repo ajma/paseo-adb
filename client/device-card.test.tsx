@@ -29,6 +29,8 @@ it("shows the manufacturer, model, Android version, and network disconnect actio
       }}
       pending={false}
       onDisconnect={() => {}}
+      vpnPending={false}
+      onVpnConnect={() => {}}
     />,
   );
   expect(screen.getByText("Google Pixel 6")).toBeTruthy();
@@ -44,6 +46,8 @@ it("keeps unauthorized USB devices visible with authorization guidance", () => {
       device={{ serial: "ABC", state: "unauthorized", network: false }}
       pending={false}
       onDisconnect={() => {}}
+      vpnPending={false}
+      onVpnConnect={() => {}}
     />,
   );
   expect(screen.getByText("ABC")).toBeTruthy();

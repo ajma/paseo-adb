@@ -5,6 +5,7 @@ export const ipSchema = z.union([z.ipv4(), z.ipv6()]);
 export const ipHistoryEntrySchema = z.object({
   host: ipSchema,
   description: z.string().min(1).max(300).optional(),
+  port: z.number().int().min(1).max(65535).optional(),
 });
 export type IpHistoryEntry = z.infer<typeof ipHistoryEntrySchema>;
 export function historyPrefix(host: string): string {

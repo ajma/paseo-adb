@@ -3,11 +3,13 @@ import { access } from "node:fs/promises";
 import { constants } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { Device } from "../shared/contracts";
-import { parseEndpoint } from "../shared/endpoint";
+import { setTimeout as delay } from "node:timers/promises";
+import { VPN_ADB_PORT, type Device } from "../shared/contracts";
+import { historyPrefix, parseEndpoint } from "../shared/endpoint";
 import { parseDevices, parseServices } from "./parsers";
 import { detectDeviceType } from "./device-type";
 import { inputTextSchema } from "../shared/input-text";
+import { detectVpn } from "./vpn";
 
 export type CommandOptions = { signal?: AbortSignal; timeout?: number };
 export type CommandRunner = (
@@ -90,17 +92,27 @@ export async function findAdb(signal: AbortSignal): Promise<string> {
   );
 }
 export class AdbClient {
+  private readonly switchingToVpn = new Set<string>();
+
   constructor(
     readonly path: string,
     private readonly run: CommandRunner,
   ) {}
   async devices(): Promise<Device[]> {
     const devices = parseDevices(await this.run(["devices", "-l"]));
+    const online = new Set(
+      devices
+        .filter((device) => device.state === "device")
+        .map((device) => device.serial),
+    );
     // Bound parallel property reads so a collection of offline devices cannot flood ADB.
     for (let i = 0; i < devices.length; i += 4) {
       await Promise.all(
         devices.slice(i, i + 4).map(async (device) => {
           if (device.state !== "device") return;
+          const vpn = device.usb
+            ? detectVpn(this.run, device.serial).catch(() => undefined)
+            : undefined;
           try {
             const output = await this.run(
               ["-s", device.serial, "shell", "getprop"],
@@ -148,6 +160,12 @@ export class AdbClient {
           } catch {
             /* A transport can disappear between listing and reading its properties. */
           }
+          const detectedVpn = await vpn;
+          if (
+            detectedVpn &&
+            !online.has(historyPrefix(detectedVpn.host) + VPN_ADB_PORT)
+          )
+            device.vpn = detectedVpn;
         }),
       );
     }
@@ -159,6 +177,79 @@ export class AdbClient {
     if (!/^(?:already )?connected to /im.test(output))
       throw new Error(output || "ADB could not connect to this device.");
     return output;
+  }
+  async switchToVpn(serial: string, host: string) {
+    if (this.switchingToVpn.has(serial))
+      throw new Error("This device is already switching to VPN ADB.");
+    this.switchingToVpn.add(serial);
+    try {
+      const devices = parseDevices(await this.run(["devices", "-l"]));
+      if (
+        !devices.some(
+          (device) =>
+            device.serial === serial && device.usb && device.state === "device",
+        )
+      )
+        throw new Error("Choose a connected, authorized USB device.");
+
+      const vpn = await detectVpn(this.run, serial);
+      if (!vpn)
+        throw new Error(
+          "Connect a supported VPN on the Android device and try again.",
+        );
+      if (vpn.host !== host)
+        throw new Error("The VPN address changed. Refresh and try again.");
+      const target = parseEndpoint(historyPrefix(vpn.host) + VPN_ADB_PORT);
+
+      if (
+        !devices.some(
+          (device) =>
+            device.serial === target.address && device.state === "device",
+        )
+      ) {
+        const output = await this.run([
+          "-s",
+          serial,
+          "tcpip",
+          String(target.port),
+        ]);
+        if (
+          !output
+            .split(/\r?\n/)
+            .includes(`restarting in TCP mode port: ${target.port}`)
+        )
+          throw new Error(output || "ADB could not enable TCP mode.");
+
+        // adbd can acknowledge TCP mode before the new listener is ready.
+        for (let attempt = 1; ; attempt++) {
+          try {
+            await this.connect(target.address);
+            break;
+          } catch (error) {
+            if (attempt === 4 || !/connection refused/i.test(String(error)))
+              throw error;
+            await delay(400 * attempt);
+          }
+        }
+        try {
+          await this.run(["-s", target.address, "wait-for-device"], {
+            timeout: 5000,
+          });
+        } catch (error) {
+          throw new Error(
+            `ADB at ${target.address} did not become ready. Check the VPN connection and approve any debugging prompt on Android.`,
+            { cause: error },
+          );
+        }
+      }
+
+      return {
+        target,
+        message: `Connected over ${vpn.provider} at ${target.address}. You can unplug USB.`,
+      };
+    } finally {
+      this.switchingToVpn.delete(serial);
+    }
   }
   async disconnect(serial: string): Promise<string> {
     const devices = parseDevices(await this.run(["devices", "-l"]));

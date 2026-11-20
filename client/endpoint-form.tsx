@@ -32,11 +32,10 @@ export function EndpointForm({
       shouldFocus.current = false;
     }
   }, [value, selection]);
-  const selectHistory = (host: string) => {
-    const prefix = historyPrefix(host);
+  const selectHistory = (address: string) => {
     shouldFocus.current = true;
-    setValue(prefix);
-    setSelection({ start: prefix.length, end: prefix.length });
+    setValue(address);
+    setSelection({ start: address.length, end: address.length });
     setError(undefined);
   };
   const submit = () => {
@@ -136,66 +135,70 @@ export function EndpointForm({
             Successful connections will appear here.
           </Text>
         )}
-        {history.map(({ host, description }) => (
-          <View
-            key={host}
-            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Use ${host}`}
-              disabled={pending}
-              onPress={() => selectHistory(host)}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: 12,
-                paddingVertical: 12,
-                borderRadius: 8,
-                backgroundColor: theme.colors.surface2,
-                opacity: pressed ? 0.7 : 1,
-                flexDirection: "row",
-                alignItems: "center",
-                flexWrap: "wrap",
-                columnGap: 12,
-                rowGap: 4,
-              })}
+        {history.map(({ host, description, port }) => {
+          const address = historyPrefix(host) + (port ?? "");
+          const label = port === undefined ? host : address;
+          return (
+            <View
+              key={host}
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
-              <Text style={{ color: theme.colors.foreground, fontSize: 14 }}>
-                {host}
-              </Text>
-              <Text
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Use ${label}`}
+                disabled={pending}
+                onPress={() => selectHistory(address)}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  paddingHorizontal: 12,
+                  paddingVertical: 12,
+                  borderRadius: 8,
+                  backgroundColor: theme.colors.surface2,
+                  opacity: pressed ? 0.7 : 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  columnGap: 12,
+                  rowGap: 4,
+                })}
+              >
+                <Text style={{ color: theme.colors.foreground, fontSize: 14 }}>
+                  {label}
+                </Text>
+                <Text
+                  style={{
+                    color: theme.colors.foregroundMuted,
+                    fontSize: 13,
+                    flexShrink: 1,
+                  }}
+                >
+                  {description ?? "Device details unavailable"}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${host} from history`}
+                disabled={pending}
+                onPress={() => onRemove(host)}
                 style={{
-                  color: theme.colors.foregroundMuted,
-                  fontSize: 13,
-                  flexShrink: 1,
+                  minWidth: 44,
+                  minHeight: 44,
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                {description ?? "Device details unavailable"}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Remove ${host} from history`}
-              disabled={pending}
-              onPress={() => onRemove(host)}
-              style={{
-                minWidth: 44,
-                minHeight: 44,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                style={{ color: theme.colors.foregroundMuted, fontSize: 22 }}
-              >
-                ×
-              </Text>
-            </Pressable>
-          </View>
-        ))}
+                <Text
+                  style={{ color: theme.colors.foregroundMuted, fontSize: 22 }}
+                >
+                  ×
+                </Text>
+              </Pressable>
+            </View>
+          );
+        })}
         {history.length > 0 && (
           <Text style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}>
-            Choose an IP, then type its current port.
+            Choose an IP, then enter its current port if needed.
           </Text>
         )}
       </View>

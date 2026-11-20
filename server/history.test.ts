@@ -3,6 +3,21 @@ import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HistoryStore } from "./history";
+
+it("persists a fixed VPN port through a reload and later ordinary connections", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "paseo-adb-history-"));
+  try {
+    const file = join(dir, "history.json");
+    const store = new HistoryStore(file);
+    await store.add("100.85.2.42", 5555);
+    await store.add("100.85.2.42");
+    expect(await new HistoryStore(file).entries()).toEqual([
+      { host: "100.85.2.42", port: 5555 },
+    ]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
 it("deduplicates and removes equivalent IPv6 spellings", async () => {
   const dir = await mkdtemp(join(tmpdir(), "paseo-adb-history-"));
   try {

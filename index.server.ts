@@ -5,6 +5,7 @@ import {
   devicesRpc,
   renameDeviceRpc,
   connectRpc,
+  connectVpnRpc,
   disconnectRpc,
   inputTextRpc,
   textHistoryRpc,
@@ -95,6 +96,19 @@ export default function contribute(server: PluginServerContext) {
       return {
         message,
         warning: "Connected, but this IP could not be saved to history.",
+      };
+    }
+  });
+  server.handle(connectVpnRpc, async ({ serial, host }) => {
+    const { adb } = await getBackend();
+    const { target, message } = await adb.switchToVpn(serial, host);
+    try {
+      await history.add(target.host, target.port);
+      return { message };
+    } catch {
+      return {
+        message,
+        warning: "Connected, but this address could not be saved to history.",
       };
     }
   });

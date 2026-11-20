@@ -6,10 +6,19 @@ import { inputTextSchema, MAX_TEXT_HISTORY } from "./input-text";
 import { manualPairingInputSchema } from "./manual-pairing";
 import { deviceNameSchema } from "./device-name";
 
+export const VPN_ADB_PORT = 5555;
+const vpnSchema = z.object({
+  provider: z.enum(["Tailscale", "WireGuard", "ZeroTier", "NetBird"]),
+  host: ipSchema,
+});
+export type DeviceVpn = z.infer<typeof vpnSchema>;
+
 export const deviceSchema = z.object({
   serial: z.string(),
   state: z.string(),
   network: z.boolean(),
+  usb: z.boolean().optional(),
+  vpn: vpnSchema.optional(),
   model: z.string().optional(),
   manufacturer: z.string().optional(),
   androidVersion: z.string().optional(),
@@ -47,6 +56,11 @@ export const devicesRpc = defineRpc({
 export const connectRpc = defineRpc({
   name: "adb.connect",
   input: z.object({ endpoint: z.string().max(300) }),
+  output: z.object({ message: z.string(), warning: z.string().optional() }),
+});
+export const connectVpnRpc = defineRpc({
+  name: "adb.connect.vpn",
+  input: z.object({ serial: z.string().min(1).max(300), host: ipSchema }),
   output: z.object({ message: z.string(), warning: z.string().optional() }),
 });
 export const renameDeviceRpc = defineRpc({

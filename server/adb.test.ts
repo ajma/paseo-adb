@@ -167,3 +167,93 @@ it("propagates an input failure without retrying", async () => {
   ).rejects.toThrow("device went offline");
   expect(run).toHaveBeenCalledTimes(2);
 });
+
+const vpnNetwork = (
+  addresses: string,
+  owner = "OwnerUid: 10373",
+  transports = "VPN",
+) =>
+  `Current Networks:\n  NetworkAgentInfo{network{541} ni{VPN CONNECTED extra: } lp{{InterfaceName: tun0 LinkAddresses: [ ${addresses} ] DnsAddresses: [ /100.100.100.100 ]}} nc{[ Transports: ${transports} Capabilities: INTERNET ${owner}]}}\nNetwork Requests:\n`;
+
+it.each([
+  [
+    "com.tailscale.ipn",
+    "Tailscale",
+    "fd7a:115c:a1e0::42/128,100.85.2.42/32",
+    "100.85.2.42",
+    "WIFI|VPN",
+  ],
+  ["com.wireguard.android", "WireGuard", "10.2.0.15/24", "10.2.0.15", "VPN"],
+  ["com.zerotier.one", "ZeroTier", "10.147.17.23/24", "10.147.17.23", "VPN"],
+  ["io.netbird.client", "NetBird", "fe80::1/64,fd00::42/64", "fd00::42", "VPN"],
+])(
+  "finds the active Android VPN address for %s on USB",
+  async (pkg, provider, addresses, host, transports) => {
+    const run = vi.fn(async (args: string[]) => {
+      if (args[0] === "devices")
+        return "ABC device usb:1-2\nemulator-5554 device\n192.168.1.2:5555 device\nLOCKED unauthorized usb:1-3";
+      if (args.includes("dumpsys"))
+        return vpnNetwork(addresses, undefined, transports);
+      if (args.includes("packages")) return `package:${pkg} uid:10373`;
+      return "";
+    });
+    const devices = await new AdbClient("adb", run).devices();
+    expect(devices.map((device) => device.vpn)).toEqual([
+      { provider, host },
+      undefined,
+      undefined,
+      undefined,
+    ]);
+    expect(
+      run.mock.calls
+        .filter(([args]) => args.includes("dumpsys"))
+        .map(([args]) => args[1]),
+    ).toEqual(["ABC"]);
+  },
+);
+
+it("only advertises an active VPN belonging to a supported app", async () => {
+  const adb = new AdbClient("adb", async (args) => {
+    if (args[0] === "devices") return "ABC device usb:1-2";
+    if (args.includes("dumpsys")) return vpnNetwork("100.85.2.42/32");
+    if (args.includes("packages"))
+      return "package:com.other.vpn uid:10373\npackage:com.tailscale.ipn uid:10374";
+    return "";
+  });
+  expect((await adb.devices())[0].vpn).toBeUndefined();
+});
+
+it("switches only the selected USB device and confirms its VPN transport is authorized", async () => {
+  const run = vi.fn(async (args: string[]) => {
+    if (args[0] === "devices")
+      return "OTHER device usb:1-1\nABC device usb:1-2";
+    if (args.includes("dumpsys"))
+      return vpnNetwork("fd00::42/64", "EstablishingAppUid: 10373");
+    if (args.includes("packages"))
+      return "package:com.wireguard.android uid:10373";
+    if (args.includes("tcpip")) return "restarting in TCP mode port: 5555";
+    if (args[0] === "connect") return "connected to [fd00::42]:5555";
+    if (args.includes("wait-for-device")) return "";
+    throw new Error(`Unexpected command ${args.join(" ")}`);
+  });
+  const result = await new AdbClient("adb", run).switchToVpn("ABC", "fd00::42");
+  expect(result.target.address).toBe("[fd00::42]:5555");
+  expect(run.mock.calls.map(([args]) => args).slice(-3)).toEqual([
+    ["-s", "ABC", "tcpip", "5555"],
+    ["connect", "[fd00::42]:5555"],
+    ["-s", "[fd00::42]:5555", "wait-for-device"],
+  ]);
+});
+
+it("does not enable TCP mode after the VPN address changes", async () => {
+  const run = vi.fn(async (args: string[]) => {
+    if (args[0] === "devices") return "ABC device usb:1-2";
+    if (args.includes("dumpsys")) return vpnNetwork("100.85.2.43/32");
+    if (args.includes("packages")) return "package:com.tailscale.ipn uid:10373";
+    throw new Error(`Unexpected command ${args.join(" ")}`);
+  });
+  await expect(
+    new AdbClient("adb", run).switchToVpn("ABC", "100.85.2.42"),
+  ).rejects.toThrow(/VPN address changed/);
+  expect(run.mock.calls.some(([args]) => args.includes("tcpip"))).toBe(false);
+});

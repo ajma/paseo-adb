@@ -13,6 +13,7 @@ it("keeps all device states and available metadata", () => {
       product: "oriole",
       transportId: "1",
       network: false,
+      usb: true,
     },
     {
       serial: "192.168.1.3:40000",

@@ -68,3 +68,19 @@ it("requires a fresh port before connecting a saved IP", () => {
   expect(connect).not.toHaveBeenCalled();
   expect(screen.getByRole("alert").textContent).toMatch(/IP and port/);
 });
+
+it("fills a saved VPN address with its fixed IPv6 port", () => {
+  const connect = vi.fn();
+  render(
+    <EndpointForm
+      theme={theme}
+      history={[{ host: "fd00::42", port: 5555 }]}
+      pending={false}
+      onConnect={connect}
+      onRemove={() => {}}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Use [fd00::42]:5555" }));
+  fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+  expect(connect).toHaveBeenCalledWith("[fd00::42]:5555");
+});

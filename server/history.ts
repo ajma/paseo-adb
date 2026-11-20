@@ -67,11 +67,15 @@ export class HistoryStore {
     this.queue = job.catch(() => {});
     return job;
   }
-  add(host: string): Promise<void> {
+  add(host: string, port?: number): Promise<void> {
     const valid = canonicalIp(host);
     return this.update((entries) =>
       [
-        entries.find((entry) => entry.host === valid) ?? { host: valid },
+        {
+          host: valid,
+          ...entries.find((entry) => entry.host === valid),
+          ...(port !== undefined ? { port } : {}),
+        },
         ...entries.filter((entry) => entry.host !== valid),
       ].slice(0, 5),
     );

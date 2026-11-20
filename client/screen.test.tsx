@@ -70,6 +70,43 @@ afterEach(() => {
   clients.splice(0).forEach((client) => client.clear());
 });
 
+it("switches an eligible USB device over to its VPN endpoint and refreshes the list", async () => {
+  const usb: Device = { serial: "USB", state: "device", network: false };
+  let devices: Device[] = [
+    { ...usb, vpn: { provider: "Tailscale", host: "100.85.2.42" } },
+    { ...usb, serial: "OFFLINE", state: "offline" },
+    { ...usb, serial: "OTHER" },
+  ];
+  api.handlers.set("adb.devices", async () => ({
+    devices,
+    adbPath: "/sdk/adb",
+  }));
+  const switchToVpn = vi.fn(async () => {
+    devices = [
+      usb,
+      { serial: "100.85.2.42:5555", state: "device", network: true },
+    ];
+    return { message: "Connected over Tailscale. You can unplug USB." };
+  });
+  api.handlers.set("adb.connect.vpn", switchToVpn);
+  openScreen();
+  const action = await screen.findByRole("button", {
+    name: /Switch to Tailscale ADB/,
+  });
+  expect(
+    screen.getAllByRole("button", { name: /Switch to .* ADB/ }),
+  ).toHaveLength(1);
+  fireEvent.click(action);
+  expect(
+    await screen.findByRole("button", { name: "Disconnect 100.85.2.42:5555" }),
+  ).toBeTruthy();
+  expect(switchToVpn).toHaveBeenCalledWith({
+    serial: "USB",
+    host: "100.85.2.42",
+  });
+  expect(await screen.findByText(/You can unplug USB/)).toBeTruthy();
+});
+
 it("wires the compact screen's history to a new-port connection and refreshes devices", async () => {
   let connected = "";
   let devices: Device[] = [];
